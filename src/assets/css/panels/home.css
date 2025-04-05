@@ -49,13 +49,13 @@
     width: 25rem;
     height: 3rem;
     padding: 0.5rem 1rem;
-    
+  
     /* Effet "glassmorphism" */
     background: var(--color-bg-blur);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--border-radius);
-    
+  
     box-shadow: 0 4px 10px var(--color-shadow);
     transition: var(--transition);
   }
@@ -136,7 +136,7 @@
     align-items: center;
     width: 85%;
     height: 100%;
-    
+  
     background: var(--color-bg-blur);
     backdrop-filter: blur(6px);
     border: 1px solid rgba(255,255,255,0.2);
@@ -214,7 +214,7 @@
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: var(--border-radius);
     box-shadow: 0 4px 8px var(--color-shadow);
-    
+  
     display: flex;
     align-items: center;
     justify-content: center;
@@ -265,9 +265,9 @@
     gap: 1rem;
   }
   
+  /* MODIF : alignement + suppression du position:absolute */
   .play-instance {
-    position: relative;
-    display: flex;
+    display: flex;                /* Pour aligner proprement le bouton et l'icône */
     align-items: center;
     background: var(--color-bg-blur);
     backdrop-filter: blur(6px);
@@ -275,6 +275,8 @@
     border: 1px solid rgba(255,255,255,0.2);
     box-shadow: 0 2px 5px var(--color-shadow);
     transition: var(--transition);
+    /* Optionnel : un peu de padding pour l'espace interne */
+    padding: 0.5rem 1rem;
   }
   
   .play-instance:hover {
@@ -287,21 +289,25 @@
     color: var(--color-text);
     font-size: 1.2rem;
     font-weight: bold;
-    padding: 0.5rem 1rem;
     cursor: pointer;
     transition: var(--transition);
+    /* On peut réduire le padding si souhaité ou laisser comme avant */
+    padding: 0;
+    margin-right: 0.5rem; /* Espace entre "Jouer" et la flèche */
   }
   
   .play-btn:hover {
     color: var(--color-accent);
   }
   
+  /* MODIF : plus d'absolu, on ajoute juste une marge ou un "gap" */
   .instance-select {
-    position: absolute;
-    right: 0.5rem;
+    /* position: absolute;     <-- Supprimé */
+    /* right: 0.5rem;         <-- Supprimé */
     font-size: 0.8rem;
     color: var(--color-accent);
     cursor: pointer;
+    margin-left: 0.5rem;       /* Espace à gauche si besoin */
   }
   
   .info-starting-game {
@@ -347,9 +353,10 @@
   /* --------------------------------------------------------------------------
      Instance popup
      -------------------------------------------------------------------------- */
+  /* MODIF : passer la popup en position: fixed pour occuper tout l'écran */
   .instance-popup {
-    position: absolute;
-    display: none; /* À afficher dynamiquement */
+    position: fixed;         /* MODIF */
+    display: none;           /* À afficher dynamiquement */
     top: 0;
     left: 0;
     width: 100%;
@@ -370,6 +377,11 @@
     padding: 2rem;
     box-shadow: 0 4px 8px var(--color-shadow);
     position: relative;
+  
+    /* Optionnel : limite la largeur pour un meilleur rendu visuel */
+    max-width: 400px;
+    width: 90%; 
+    margin: 0 auto;
   }
   
   .close-popup {
@@ -381,6 +393,10 @@
     background: var(--color-accent);
     border-radius: 50%;
     cursor: pointer;
+    /* Si vous avez une icône, vous pouvez l'aligner au centre */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .instances-tab p {
