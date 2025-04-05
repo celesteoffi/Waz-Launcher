@@ -1,7 +1,7 @@
 {
     "name": "Waz Launcher",
     "preductname": "Waz-Launcher",
-    "version": "2.0.8",
+    "version": "2.0.9",
     "description": "Launcher Mincraft Waz-Launcher",
     "main": "src/app.js",
     "author": {
