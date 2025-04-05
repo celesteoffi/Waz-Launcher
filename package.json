@@ -1,8 +1,8 @@
 {
-    "name": "Waz Launcher",
-    "preductname": "Waz-Launcher",
-    "version": "2.4",
-    "description": "Launcher Mincraft Waz-Launcher",
+    "name": "waz-launcher",
+    "preductname": "Waz Launcher",
+    "version": "2.5",
+    "description": "Launcher Mincraft Waz Launcher",
     "main": "src/app.js",
     "author": {
         "name": "luuxis, Wazou, Inc.",
