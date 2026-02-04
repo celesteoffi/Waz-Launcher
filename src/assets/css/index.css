@@ -2,7 +2,7 @@
 @import "theme.css";
 
 /* ========================================================================== */
-/* Loading / Splash - UniverCraft (premium glass)                              */
+/* UniverCraft Splash - stable premium glass (robust)                          */
 /* ========================================================================== */
 
 :root{
@@ -25,34 +25,26 @@
   --t2: 420ms cubic-bezier(.2,.8,.2,1);
 }
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
+*{ margin:0; padding:0; box-sizing:border-box; }
 
-html, body{
-  height:100%;
-}
+html, body{ height:100%; }
 
 body{
   font-family:"Poppins", system-ui, -apple-system, sans-serif;
-  background: var(--background);
+  background: var(--background, #0b0f14);
   color: var(--text);
   overflow:hidden;
   -webkit-font-smoothing: antialiased;
   position: relative;
 }
 
-/* Fond + overlay stylé */
+/* Fond + overlay */
 body::before{
   content:"";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events:none;
-
-  /* Si ton theme.css fournit déjà un background-image, ça s’adapte quand même */
   background:
     radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.14), transparent 60%),
     radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.12), transparent 62%),
@@ -60,14 +52,13 @@ body::before{
     linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.75));
 }
 
-/* Eviter drag/select */
 img{
   -webkit-user-drag: none;
   user-select: none;
 }
 
 /* ========================================================================== */
-/* Splash wrapper                                                             */
+/* Wrapper                                                                     */
 /* ========================================================================== */
 
 #splash{
@@ -80,21 +71,29 @@ img{
   padding: 26px;
 }
 
-/* Carte centrale */
+/* Carte */
 .splash-card{
   width: min(520px, 92vw);
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
-  background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.06));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 
+  /* fallback stable même si backdrop-filter bug */
+  background: rgba(18, 22, 28, 0.62);
   box-shadow: var(--shadow);
   overflow: hidden;
   position: relative;
 }
 
-/* Ligne accent en haut */
+/* Backdrop blur uniquement si supporté */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
+  .splash-card{
+    background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.06));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+/* ligne accent */
 .splash-card::before{
   content:"";
   position:absolute;
@@ -104,7 +103,7 @@ img{
   opacity: 0.85;
 }
 
-/* Glow subtil derrière */
+/* glow */
 .splash-card::after{
   content:"";
   position:absolute;
@@ -117,7 +116,7 @@ img{
   pointer-events:none;
 }
 
-/* Contenu */
+/* contenu */
 .splash-inner{
   position: relative;
   z-index: 1;
@@ -129,7 +128,10 @@ img{
   text-align:center;
 }
 
-/* Logo */
+/* ========================================================================== */
+/* Logo                                                                        */
+/* ========================================================================== */
+
 .splash-logo-wrap{
   width: 118px;
   height: 118px;
@@ -160,13 +162,17 @@ img{
   box-shadow: 0 12px 28px rgba(0,0,0,0.45);
 }
 
-/* Titre */
+/* ========================================================================== */
+/* Text                                                                         */
+/* ========================================================================== */
+
 .splash-title{
   font-weight: 900;
   letter-spacing: 4px;
   text-transform: uppercase;
   font-size: 1.25rem;
   margin-top: 2px;
+
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   -webkit-background-clip: text;
@@ -174,7 +180,6 @@ img{
   text-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
-/* Messages */
 .splash-message{
   font-size: 1.05rem;
   font-weight: 800;
@@ -194,7 +199,6 @@ img{
   color: rgba(245,245,245,0.85);
 }
 
-/* Message status bas (update / download / etc.) */
 .message{
   margin-top: 6px;
   font-size: 0.98rem;
@@ -203,7 +207,7 @@ img{
 }
 
 /* ========================================================================== */
-/* Progress                                                                    */
+/* Progress                                                                     */
 /* ========================================================================== */
 
 .progress-wrap{
@@ -231,25 +235,32 @@ progress.progress{
   width: 100%;
   height: 10px;
   appearance: none;
+  -webkit-appearance: none;
   border-radius: 999px;
   overflow:hidden;
-  opacity: 1;
 }
 
+/* WebKit */
 progress.progress::-webkit-progress-bar{
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 999px;
 }
-
 progress.progress::-webkit-progress-value{
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   border-radius: 999px;
 }
 
+/* Firefox */
+progress.progress::-moz-progress-bar{
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 999px;
+}
+
 /* ========================================================================== */
-/* Button (si tu l’utilises pour update)                                       */
+/* Button                                                                       */
 /* ========================================================================== */
+
 .download-update{
   width: 100%;
   height: 44px;
@@ -273,10 +284,9 @@ progress.progress::-webkit-progress-value{
 }
 
 /* ========================================================================== */
-/* Animations + states                                                         */
+/* Animations                                                                   */
 /* ========================================================================== */
 
-/* apparition */
 .fade-in{
   animation: fadeInUp .6s var(--t2) both;
 }
@@ -286,7 +296,6 @@ progress.progress::-webkit-progress-value{
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* léger pulse sur logo */
 .pulse{
   animation: pulseGlow 1.9s ease-in-out infinite;
 }
@@ -297,8 +306,10 @@ progress.progress::-webkit-progress-value{
 }
 
 /* ========================================================================== */
-/* Compat: tes anciennes classes "opacity/translate/show" (si ton JS les utilise) */
+/* Compat JS legacy (NE DOIT PLUS casser la position)                           */
 /* ========================================================================== */
+
+/* Si ton JS met .opacity/.show : OK */
 .splash.opacity,
 .splash-message.opacity,
 .splash-author.opacity,
@@ -307,6 +318,7 @@ progress.progress::-webkit-progress-value{
   opacity: 1 !important;
 }
 
+/* IMPORTANT: on neutralise l’ancien translate(-50%) qui faisait bugger */
 .splash.translate{
-  transform: translate(-50%) translateY(-10px);
+  transform: none !important;
 }
