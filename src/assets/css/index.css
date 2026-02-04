@@ -1,129 +1,214 @@
 @import "font.css";
-@import 'theme.css';
+@import "theme.css";
 
-body {
-    background-color: var(--background);
-    font-family: "Poppins";
-    letter-spacing: 0px;
+/* ─────────────────────────────
+   Base
+───────────────────────────── */
+:root{
+  --radius-xl: 22px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+
+  --shadow-lg: 0 22px 70px rgba(0,0,0,.35);
+  --shadow-md: 0 14px 40px rgba(0,0,0,.25);
+
+  --ease-out: cubic-bezier(.16,1,.3,1);
 }
 
-img {
-    -webkit-user-drag: none;
-    user-select: none;
+* { box-sizing: border-box; }
+
+body{
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--color);
+  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  letter-spacing: .2px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
-.splash {
-    position: absolute;
-    top: 180px;
-    left: 50%;
-    transform: translate(-50%);
-    width: 140px;
-    height: 140px;
-    transition: opacity .3s, top 1.5s;
-    opacity: 0;
+/* Empêche le drag + sélection sur images */
+img{
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
-.splash.opacity {
-    opacity: 1;
+/* ─────────────────────────────
+   Layout (400px de large comme ton design)
+───────────────────────────── */
+/* Optionnel : si ton HTML a un wrapper, tu peux l'utiliser
+   .app { width: 400px; margin: 0 auto; position: relative; height: 100vh; }
+*/
+
+/* ─────────────────────────────
+   Splash logo
+───────────────────────────── */
+.splash{
+  position: absolute;
+  top: 180px;
+  left: 50%;
+  transform: translateX(-50%) scale(.92);
+  width: 140px;
+  height: 140px;
+  opacity: 0;
+
+  /* Look moderne */
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color) 10%, transparent);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  transition:
+    opacity .35s var(--ease-out),
+    top 1.4s var(--ease-out),
+    transform 1.4s var(--ease-out);
 }
 
-.splash.translate {
-    top: 129px;
+.splash.opacity{
+  opacity: 1;
 }
 
-.splash-message {
-    position: absolute;
-    top: 289px;
-    left: 0px;
-    width: 400px;
-    font: normal normal bold 19px/29px Poppins;
-    text-align: center;
-    letter-spacing: 0px;
-    transition: opacity 1.5s;
-    color: var(--color);
-    opacity: 0;
+.splash.translate{
+  top: 129px;
+  transform: translateX(-50%) scale(1);
 }
 
-.splash-message.opacity {
-    opacity: 1;
+/* ─────────────────────────────
+   Text blocks (message + auteur)
+───────────────────────────── */
+.splash-message,
+.splash-author,
+.message{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
+  color: var(--color);
 }
 
-.splash-author {
-    position: absolute;
-    top: 326px;
-    left: 0px;
-    width: 400px;
-    text-align: center;
-    transition: opacity 1.5s;
-    font: normal normal normal 9px/13px Poppins;
-    color: var(--color);
-    opacity: 0;
+.splash-message{
+  top: 289px;
+  font: 700 18px/1.35 "Poppins";
+  letter-spacing: .2px;
+  transform: translateX(-50%) translateY(6px);
+  text-wrap: balance;
 }
 
-.splash-author .author {
-    font: normal normal bold 9px/13px Poppins;
+.splash-author{
+  top: 326px;
+  font: 400 11px/1.2 "Poppins";
+  opacity: 0;
+  transform: translateX(-50%) translateY(6px);
+  color: color-mix(in srgb, var(--color) 75%, transparent);
 }
 
-.splash-author.opacity {
-    opacity: 1;
+.splash-author .author{
+  font-weight: 700;
+  color: var(--color);
 }
 
-.message {
-    position: absolute;
-    top: 347px;
-    left: 0px;
-    width: 400px;
-    text-align: center;
-    transition: opacity 1.5s;
-    font: normal normal bold 18px/27px Poppins;
-    color: var(--color);
-    opacity: 0;
+.message{
+  top: 347px;
+  font: 700 16px/1.35 "Poppins";
+  transform: translateX(-50%) translateY(6px);
 }
 
-.download-update {
-    position: absolute;
-    left: 25%;
-    margin-top: 20px;
-    width: 200px;
-    font: normal normal bold 22px / 45px Poppins;
-    color: var(--color);
-    border: 2px solid var(--color);
-    border-radius: 15px;
-    transition: background-color .2s, color .2s;
+.splash-message.opacity,
+.splash-author.opacity,
+.message.opacity{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.download-update:hover {
-    background-color: var(--color);
-    color: var(--background);
-    cursor: pointer;
+/* ─────────────────────────────
+   Bouton update (plus moderne)
+───────────────────────────── */
+.download-update{
+  position: absolute;
+  left: 50%;
+  top: 372px;            /* au lieu de margin-top, plus stable */
+  transform: translateX(-50%);
+  width: 220px;
+  height: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  font: 700 15px/1 "Poppins";
+  color: var(--color);
+  background: color-mix(in srgb, var(--background) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color) 20%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  transition:
+    transform .18s var(--ease-out),
+    background-color .18s var(--ease-out),
+    color .18s var(--ease-out),
+    border-color .18s var(--ease-out),
+    box-shadow .18s var(--ease-out);
 }
 
-.message.opacity {
-    opacity: 1;
+.download-update:hover{
+  cursor: pointer;
+  transform: translateX(-50%) translateY(-2px);
+  background: color-mix(in srgb, var(--color) 18%, var(--background));
+  border-color: color-mix(in srgb, var(--color) 35%, transparent);
+  box-shadow: 0 16px 44px rgba(0,0,0,.22);
 }
 
-.progress {
-    position: absolute;
-    top: 410px;
-    left: 106px;
-    width: 189px;
-    height: 10px;
-    appearance: none;
-    transition: opacity .2s;
-    opacity: 0;
+.download-update:active{
+  transform: translateX(-50%) translateY(0px) scale(.99);
 }
 
-.show {
-    opacity: 1;
+/* ─────────────────────────────
+   Progress bar (plus clean)
+───────────────────────────── */
+.progress{
+  position: absolute;
+  top: 410px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 10px;
+
+  appearance: none;
+  opacity: 0;
+  transition: opacity .25s var(--ease-out);
 }
 
-.progress::-webkit-progress-bar {
-    background-color: var(--background);
-    border: solid 1px var(--element-color);
-    border-radius: 10px;
+.show{ opacity: 1; }
+
+.progress::-webkit-progress-bar{
+  background: color-mix(in srgb, var(--background) 75%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color) 14%, transparent);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 
-.progress::-webkit-progress-value {
-    background-color: var(--element-color);
-    border-radius: 10px;
+.progress::-webkit-progress-value{
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--element-color) 80%, white),
+    var(--element-color)
+  );
+  border-radius: 999px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.15);
+}
+
+/* Firefox */
+.progress::-moz-progress-bar{
+  background: var(--element-color);
+  border-radius: 999px;
 }
