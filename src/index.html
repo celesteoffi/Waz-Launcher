@@ -1,42 +1,49 @@
-<html>
+<!doctype html>
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self';" />
+    <!-- CSP OK pour scripts locaux. Si tu as des devtools/source-map qui cassent, dis-moi. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src https: http:;" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>UniverCraft — Updater</title>
     <link rel="stylesheet" href="assets/css/index.css" />
   </head>
 
   <body>
-    <div id="splash" style="display:none">
-      <div class="splash-card fade-in">
+    <!-- ✅ Visible par défaut pour éviter l'écran vide si init JS rate -->
+    <main id="splash" aria-label="UniverCraft Updater">
+      <section class="splash-card fade-in" role="dialog" aria-live="polite">
         <div class="splash-inner">
-          <div class="splash-logo-wrap pulse">
-            <img class="splash-logo" src="assets/images/icon.png" alt="UniverCraft" />
+          <div class="splash-logo-wrap pulse" aria-hidden="true">
+            <img class="splash-logo" src="assets/images/icon.png" alt="Logo UniverCraft" />
           </div>
 
-          <div class="splash-title">UNIVERCRAFT</div>
+          <h1 class="splash-title">UNIVERCRAFT</h1>
 
-          <!-- Ces 2 lignes sont remplies par ton JS -->
-          <p class="splash-message"></p>
-          <p class="splash-author"><span class="author"></span></p>
+          <!-- Rempli par JS -->
+          <p class="splash-message" id="splash-message">Synchronisation des fichiers…</p>
+          <p class="splash-author" id="splash-author"><span class="author">@Updater</span></p>
 
-          <!-- Texte status -->
-          <p class="message">Recherche de mise à jour...</p>
+          <!-- Status (JS innerHTML) -->
+          <p class="message" id="status-message">Recherche de mise à jour…</p>
 
-          <!-- Progress + infos -->
-          <div class="progress-wrap">
+          <!-- Progress -->
+          <div class="progress-wrap" id="progress-wrap">
             <div class="progress-top">
-              <span class="hint">Téléchargement</span>
+              <span class="hint" id="progress-hint">Téléchargement</span>
               <span class="percent" id="progress-percent">0%</span>
             </div>
-            <progress value="0" max="0" class="progress"></progress>
+
+            <!-- ✅ classe = progress (ton JS la trouve) -->
+            <progress value="0" max="100" class="progress" id="progress-bar">0%</progress>
           </div>
 
-          <!-- Bouton optionnel si ton JS l’affiche -->
-          <!-- <div class="download-update">Télécharger la mise à jour</div> -->
+          <!-- Bouton injecté par JS si besoin -->
+          <!-- <button class="download-update" id="download-update-btn" type="button">Télécharger</button> -->
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
 
     <script src="assets/js/index.js" type="module"></script>
   </body>

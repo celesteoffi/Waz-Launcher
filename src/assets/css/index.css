@@ -2,14 +2,14 @@
 @import "theme.css";
 
 /* ========================================================================== */
-/* UniverCraft Splash - stable premium glass (robust)                          */
+/* UniverCraft Updater - Premium Glass                                         */
 /* ========================================================================== */
 
 :root{
   --accent: #00d084;
   --accent2: #00c2ff;
 
-  --text: rgba(245,245,245,0.95);
+  --text: rgba(245,245,245,0.96);
   --text-dim: rgba(245,245,245,0.70);
 
   --glass: rgba(255,255,255,0.08);
@@ -38,7 +38,7 @@ body{
   position: relative;
 }
 
-/* Fond + overlay */
+/* Fond premium */
 body::before{
   content:"";
   position: fixed;
@@ -49,17 +49,13 @@ body::before{
     radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.14), transparent 60%),
     radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.12), transparent 62%),
     radial-gradient(1200px 900px at 50% 75%, rgba(0,0,0,0.55), transparent 55%),
-    linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.75));
+    linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.78));
 }
 
 img{
   -webkit-user-drag: none;
   user-select: none;
 }
-
-/* ========================================================================== */
-/* Wrapper                                                                     */
-/* ========================================================================== */
 
 #splash{
   position: relative;
@@ -76,15 +72,13 @@ img{
   width: min(520px, 92vw);
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
-
-  /* fallback stable même si backdrop-filter bug */
   background: rgba(18, 22, 28, 0.62);
   box-shadow: var(--shadow);
   overflow: hidden;
   position: relative;
 }
 
-/* Backdrop blur uniquement si supporté */
+/* blur si supporté */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
   .splash-card{
     background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.06));
@@ -93,17 +87,17 @@ img{
   }
 }
 
-/* ligne accent */
+/* Ligne accent top */
 .splash-card::before{
   content:"";
   position:absolute;
   left:0; right:0; top:0;
   height: 2px;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
-  opacity: 0.85;
+  opacity: 0.90;
 }
 
-/* glow */
+/* Glow */
 .splash-card::after{
   content:"";
   position:absolute;
@@ -116,22 +110,18 @@ img{
   pointer-events:none;
 }
 
-/* contenu */
 .splash-inner{
   position: relative;
   z-index: 1;
   padding: 26px 26px 22px 26px;
   display:flex;
   flex-direction:column;
-  gap: 14px;
+  gap: 12px;
   align-items:center;
   text-align:center;
 }
 
-/* ========================================================================== */
-/* Logo                                                                        */
-/* ========================================================================== */
-
+/* Logo */
 .splash-logo-wrap{
   width: 118px;
   height: 118px;
@@ -162,10 +152,7 @@ img{
   box-shadow: 0 12px 28px rgba(0,0,0,0.45);
 }
 
-/* ========================================================================== */
-/* Text                                                                         */
-/* ========================================================================== */
-
+/* Title */
 .splash-title{
   font-weight: 900;
   letter-spacing: 4px;
@@ -180,6 +167,7 @@ img{
   text-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
+/* Texts */
 .splash-message{
   font-size: 1.05rem;
   font-weight: 800;
@@ -189,25 +177,25 @@ img{
 }
 
 .splash-author{
-  font-size: 0.80rem;
+  font-size: 0.82rem;
   color: var(--text-dim);
   min-height: 1.2em;
 }
 
 .splash-author .author{
   font-weight: 900;
-  color: rgba(245,245,245,0.85);
+  color: rgba(245,245,245,0.86);
 }
 
 .message{
-  margin-top: 6px;
+  margin-top: 2px;
   font-size: 0.98rem;
   font-weight: 800;
-  color: rgba(245,245,245,0.88);
+  color: rgba(245,245,245,0.90);
 }
 
 /* ========================================================================== */
-/* Progress                                                                     */
+/* Progress                                                                    */
 /* ========================================================================== */
 
 .progress-wrap{
@@ -216,8 +204,20 @@ img{
   display:flex;
   flex-direction:column;
   gap: 10px;
+
+  /* ✅ au départ on laisse visible, mais propre */
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--t2), transform var(--t2);
 }
 
+/* Si ton JS veut cacher/afficher: il peut ajouter/retirer .show */
+.progress-wrap:not(.show){
+  /* option: tu peux commenter si tu veux toujours visible */
+  opacity: 1;
+}
+
+/* barre top */
 .progress-top{
   display:flex;
   justify-content: space-between;
@@ -228,9 +228,10 @@ img{
 
 .progress-top .percent{
   font-weight: 900;
-  color: rgba(245,245,245,0.88);
+  color: rgba(245,245,245,0.90);
 }
 
+/* ✅ le <progress> correspond à class="progress" dans ton HTML */
 progress.progress{
   width: 100%;
   height: 10px;
@@ -258,7 +259,7 @@ progress.progress::-moz-progress-bar{
 }
 
 /* ========================================================================== */
-/* Button                                                                       */
+/* Button                                                                      */
 /* ========================================================================== */
 
 .download-update{
@@ -284,7 +285,7 @@ progress.progress::-moz-progress-bar{
 }
 
 /* ========================================================================== */
-/* Animations                                                                   */
+/* Animations                                                                  */
 /* ========================================================================== */
 
 .fade-in{
@@ -306,19 +307,7 @@ progress.progress::-moz-progress-bar{
 }
 
 /* ========================================================================== */
-/* Compat JS legacy (NE DOIT PLUS casser la position)                           */
+/* Compat legacy classes (safe)                                                */
 /* ========================================================================== */
 
-/* Si ton JS met .opacity/.show : OK */
-.splash.opacity,
-.splash-message.opacity,
-.splash-author.opacity,
-.message.opacity,
-.progress.show{
-  opacity: 1 !important;
-}
-
-/* IMPORTANT: on neutralise l’ancien translate(-50%) qui faisait bugger */
-.splash.translate{
-  transform: none !important;
-}
+.splash.translate{ transform: none !important; }

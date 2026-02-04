@@ -46,26 +46,22 @@ function formatPercent(value, max) {
 
 class Splash {
   constructor() {
-    // Elements (compat anciens + nouveaux)
     this.splashRoot = document.querySelector("#splash");
-    this.splashLogoOld = document.querySelector(".splash"); // ancien <img class="splash">
+    this.splashLogoOld = document.querySelector(".splash"); // legacy
     this.splashMessage = document.querySelector(".splash-message");
     this.splashAuthor = document.querySelector(".splash-author");
     this.authorSpan = document.querySelector(".splash-author .author");
     this.message = document.querySelector(".message");
-    this.progress = document.querySelector("progress.progress") || document.querySelector(".progress");
-    this.percentEl = document.getElementById("progress-percent"); // nouveau
+
+    // progress
+    this.progress = document.querySelector("progress.progress") || document.querySelector("progress") || document.querySelector(".progress");
+    this.percentEl = document.getElementById("progress-percent");
+
     this.downloadBtn = null;
 
     this._interval = null;
     this._closing = false;
     this._listenersBound = false;
-
-    this.brand = {
-      name: "UniverCraft",
-      discordLabel: "Discord",
-      colors: ["#00c2ff", "#00d084"],
-    };
 
     this.splashes = [
       { message: "Connexion aux serveurs d’UniverCraft…", author: "UniverCraft" },
@@ -75,28 +71,32 @@ class Splash {
       { message: "Synchronisation des fichiers…", author: "Updater" },
     ];
 
-    document.addEventListener("DOMContentLoaded", () => this.init());
+    // ✅ IMPORTANT: DOMContentLoaded peut déjà être passé selon comment Electron injecte le script
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => this.init());
+    } else {
+      this.init();
+    }
+
     document.addEventListener("keydown", (e) => this.handleDevTools(e));
   }
 
   async init() {
     try {
-      // Theme
       const db = new database();
-      const configClient = await db.readData("configClient");
+      const configClient = await db.readData("configClient").catch(() => null);
       const theme = configClient?.launcher_config?.theme || "auto";
 
-      const isDarkTheme = await ipcRenderer.invoke("is-dark-theme", theme).then((r) => r);
+      const isDarkTheme = await ipcRenderer.invoke("is-dark-theme", theme).then((r) => r).catch(() => true);
       document.body.className = isDarkTheme ? "dark global" : "light global";
 
-      // Windows: init progress in taskbar
       if (process.platform === "win32") ipcRenderer.send("update-window-progress-load");
 
       await this.playIntro();
       await this.checkUpdateFlow();
     } catch (err) {
       console.error(err);
-      this.shutdown(`Erreur au démarrage :<br>${this.escapeHtml(err.message || String(err))}`);
+      this.shutdown(`Erreur au démarrage :<br>${this.escapeHtml(err?.message || String(err))}`);
     }
   }
 
@@ -105,22 +105,18 @@ class Splash {
   async playIntro() {
     if (this.splashRoot) this.splashRoot.style.display = "block";
 
-    // Message initial (random) + rotation douce
     this.setSplash(this.randomSplash());
 
-    // Petite anim de l'ancien logo si encore présent
     await sleep(120);
     if (this.splashLogoOld) this.splashLogoOld.classList.add("opacity");
     await sleep(380);
-    if (this.splashLogoOld) this.splashLogoOld.classList.add("translate");
+    if (this.splashLogoOld) this.splashLogoOld.classList.add("translate"); // neutralisé côté CSS (safe)
 
-    // Afficher textes
     await sleep(220);
     this.splashMessage?.classList.add("opacity");
     this.splashAuthor?.classList.add("opacity");
     this.message?.classList.add("opacity");
 
-    // Rotation messages toutes les 2.6s (jusqu’à update)
     this._interval = setInterval(() => {
       if (this._closing) return;
       this.setSplash(this.randomSplash());
@@ -146,12 +142,10 @@ class Splash {
     this.bindIpcOnce();
 
     try {
-      // Lancer check auto-updater côté main process
       await ipcRenderer.invoke("update-app");
-      // => Suite via events: updateAvailable / update-not-available / error
     } catch (err) {
       console.error(err);
-      this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${this.escapeHtml(err.message)}`);
+      this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${this.escapeHtml(err?.message || String(err))}`);
     }
   }
 
@@ -159,17 +153,13 @@ class Splash {
     if (this._listenersBound) return;
     this._listenersBound = true;
 
-    // Update disponible
     ipcRenderer.on("updateAvailable", async () => {
       if (this._closing) return;
 
-      // stop rotation messages
       this.stopSplashRotation();
-
       this.setStatus("Mise à jour disponible !");
       this.hideDownloadButton();
 
-      // Windows: download + install auto
       if (os.platform() === "win32") {
         this.showProgress();
         this.setProgress(0, 1);
@@ -177,11 +167,9 @@ class Splash {
         return;
       }
 
-      // Linux/mac: propose download externe (GitHub assets)
       await this.downloadUpdateExternal();
     });
 
-    // Progress download (Windows)
     ipcRenderer.on("download-progress", (event, progress) => {
       if (this._closing) return;
 
@@ -189,11 +177,11 @@ class Splash {
       const total = progress?.total ?? 0;
 
       ipcRenderer.send("update-window-progress", { progress: transferred, size: total });
+
       this.showProgress();
       this.setProgress(transferred, total);
       this.updatePercent(transferred, total);
 
-      // Status plus "premium"
       if (total > 0) {
         const pct = Math.floor((transferred / total) * 100);
         this.setStatus(`Téléchargement de la mise à jour… <span style="opacity:.8">(${pct}%)</span>`);
@@ -202,7 +190,6 @@ class Splash {
       }
     });
 
-    // Pas d’update
     ipcRenderer.on("update-not-available", async () => {
       if (this._closing) return;
 
@@ -212,7 +199,6 @@ class Splash {
       await this.maintenanceCheck();
     });
 
-    // Erreur auto-updater
     ipcRenderer.on("error", (event, err) => {
       if (this._closing) return;
       const msg = err?.message || String(err || "Erreur inconnue");
@@ -230,7 +216,6 @@ class Splash {
   /* ------------------------------ External update (mac/linux) ------------- */
 
   getLatestReleaseForOS(osKey, preferredExt, assets) {
-    // osKey: 'mac' / 'linux'
     const list = (assets || []).filter((a) => {
       const name = (a.name || "").toLowerCase();
       return name.includes(osKey) && name.endsWith(preferredExt);
@@ -253,7 +238,6 @@ class Splash {
       const owner = repoURL[0];
       const repo = repoURL[1];
 
-      // API repos/releases (direct, fiable)
       const releases = await fetchJson(`https://api.github.com/repos/${owner}/${repo}/releases`, {
         timeout: 9000,
         headers: { Accept: "application/vnd.github+json" },
@@ -267,9 +251,9 @@ class Splash {
       if (os.platform() === "darwin") {
         picked = this.getLatestReleaseForOS("mac", ".dmg", assets);
       } else if (os.platform() === "linux") {
-        // AppImage recommandé
-        picked = this.getLatestReleaseForOS("linux", ".appimage", assets) ||
-                 this.getLatestReleaseForOS("linux", ".deb", assets);
+        picked =
+          this.getLatestReleaseForOS("linux", ".appimage", assets) ||
+          this.getLatestReleaseForOS("linux", ".deb", assets);
       }
 
       if (!picked) {
@@ -299,17 +283,18 @@ class Splash {
         `<span style="opacity:.85">Vérifie ta connexion internet.</span>`
       );
       await sleep(900);
-      return this.maintenanceCheck(); // fallback: continue
+      return this.maintenanceCheck();
     }
   }
 
   attachDownloadButton(onClick) {
-    // le bouton est injecté via innerHTML -> on récupère et on bind
     const btn = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!btn) return;
 
-    // éviter multi-bind
-    btn.replaceWith(btn.cloneNode(true));
+    // ✅ anti double-bind
+    const clone = btn.cloneNode(true);
+    btn.replaceWith(clone);
+
     const fresh = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!fresh) return;
 
@@ -337,9 +322,7 @@ class Splash {
       return this.startLauncher();
     } catch (e) {
       console.error(e);
-      return this.shutdown(
-        "Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement."
-      );
+      return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
     }
   }
 
