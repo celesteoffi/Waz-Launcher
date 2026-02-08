@@ -434,7 +434,7 @@ body::before {
   align-items: center;
   gap: 12px;
 
-  padding: 10px 14px;
+  padding: 10px 18px;
   border-radius: 999px;
   border: 1px solid var(--stroke);
 
