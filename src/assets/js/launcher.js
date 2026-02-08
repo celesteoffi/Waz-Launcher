@@ -1,6 +1,6 @@
 /**
  * @author Luuxis
- * Luuxis License v1.0 (voir fichier LICENSE pour les détails en FR/EN)
+ * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
 // import panel
 import Login from './panels/login.js';
@@ -65,6 +65,7 @@ class Launcher {
         const platform = os.platform() === 'darwin' ? "darwin" : "other";
 
         document.querySelector(`.${platform} .frame`).classList.toggle('hide')
+        document.querySelector('.dragbar').classList.toggle('hide')
 
         document.querySelector(`.${platform} .frame #minimize`).addEventListener('click', () => {
             ipcRenderer.send('main-window-minimize');
@@ -92,7 +93,7 @@ class Launcher {
         if (!configClient) {
             await this.db.createData('configClient', {
                 account_selected: null,
-                instance_select: null,
+                instance_selct: null,
                 java_config: {
                     java_path: null,
                     java_memory: {

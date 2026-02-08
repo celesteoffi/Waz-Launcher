@@ -44,6 +44,7 @@ input::-webkit-inner-spin-button {
     height: 26px;
     -webkit-app-region: drag;
     z-index: 11;
+    display: none;
 }
 
 .darwin .frame {
@@ -114,11 +115,11 @@ input::-webkit-inner-spin-button {
     cursor: pointer;
 }
 
-.darwin-icon-maximize:before {
+.darwin-icon-minimize:before {
     background: #07d014;
 }
 
-.darwin-icon-minimize:before {
+.darwin-icon-maximize:before {
     background: #ffbd2e;
 }
 

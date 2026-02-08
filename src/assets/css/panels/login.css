@@ -1,50 +1,85 @@
-.login .container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
-
-.login-tabs {
-    position: absolute;
-    padding: 15px;
-    background: var(--background);
-    border-radius: 15px;
-    text-align: center;
-    min-width: 40%;
-}
-
-.login-home,
-.login-offline,
-.login-AZauth,
-.login-AZauth-A2F {
-    display: none;
-}
-
-.login-text {
-    font-size: 1.3rem;
-}
-
-.connect,
-.cancel {
-    background: none;
-    color: var(--color);
-    border: solid 4px var(--element-color);
-    border-radius: 10px;
-    padding: 0.3rem 4rem;
-    font-size: inherit;
-    font-weight: bold;
-    margin: 15px 10px;
-}
-
-.input-login .email,
-.input-login .password,
-.A2F {
-    color: var(--color);
-    background: none;
-    border: solid 2px var(--element-color);
-    border-radius: 30px;
-    width: 50%;
-    padding: 0.4rem 1rem;
-    margin-top: 10px;
-}
+/* -----------------------------------------------
+   Login Page - style épuré & glassmorphism
+----------------------------------------------- */
+:root {
+    --color-bg: rgba(0, 0, 0, 0.4);           /* Fond sombre translucide */
+    --color-bg-blur: rgba(255, 255, 255, 0.08); /* Effet vitre */
+    --color-accent: #9c27b0;                  /* Accent violet */
+    --color-text: #f0f0f0;                    /* Texte clair */
+    --color-shadow: rgba(0, 0, 0, 0.7);
+    --transition: 0.3s ease;
+    --border-radius: 12px;
+    --font-main: 'Segoe UI', sans-serif;
+  }
+  
+  .login .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-family: var(--font-main);
+  }
+  
+  .login-tabs {
+      position: absolute;
+      padding: 15px;
+      background: var(--color-bg-blur);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--border-radius);
+      text-align: center;
+      min-width: 40%;
+      box-shadow: 0 4px 10px var(--color-shadow);
+      transition: var(--transition);
+  }
+  
+  .login-tabs:hover {
+      background: var(--color-bg);
+  }
+  
+  .login-home,
+  .login-offline,
+  .login-AZauth,
+  .login-AZauth-A2F {
+      display: none;
+  }
+  
+  .login-text {
+      font-size: 1.3rem;
+      color: var(--color-text);
+  }
+  
+  /* Boutons Connect/Cancel */
+  .connect,
+  .cancel {
+      background: none;
+      color: var(--color-text);
+      border: 2px solid var(--color-accent);
+      border-radius: 10px;
+      padding: 0.3rem 4rem;
+      font-size: inherit;
+      font-weight: bold;
+      margin: 15px 10px;
+      transition: var(--transition);
+      cursor: pointer;
+  }
+  
+  .connect:hover,
+  .cancel:hover {
+      background: var(--color-accent);
+      color: #000;
+  }
+  
+  /* Champs input */
+  .input-login .email,
+  .input-login .password,
+  .A2F {
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 2px solid var(--color-accent);
+      border-radius: 30px;
+      width: 50%;
+      padding: 0.4rem 1rem;
+      margin-top: 10px;
+  }
+  
