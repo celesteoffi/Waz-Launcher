@@ -429,21 +429,11 @@ body::before {
   gap: 12px;
 }
 
-.play-instance {
+.play-instance{
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--stroke);
-
-  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  box-shadow: var(--shadow2);
-  transition: transform var(--t2), border-color var(--t), box-shadow var(--t), background var(--t);
+  justify-content: space-between; /* garde l'arrow à droite */
+  gap: 10px;
 }
 
 .play-instance:hover {
@@ -453,7 +443,17 @@ body::before {
   background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 
-.play-btn {
+.play-btn{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  line-height: 1;            /* important pour le centrage visuel */
+  min-height: 34px;          /* donne une hauteur stable */
+  padding: 6px 0;            /* évite l'effet "texte trop haut/bas" */
+
   border: none;
   background: none;
   cursor: pointer;
@@ -462,25 +462,17 @@ body::before {
   font-size: 1.15rem;
   font-weight: 1000;
   letter-spacing: 0.5px;
-
-  padding: 0;
-  transition: color var(--t);
 }
+
 
 .play-btn:hover { color: var(--accent); }
 
 /* mini bouton instance */
-.instance-select {
-  font-size: 0.85rem;
-  cursor: pointer;
-
-  background: rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.10);
-  padding: 6px 10px;
-  border-radius: 999px;
-
-  color: rgba(245,245,245,0.70);
-  transition: background var(--t), border-color var(--t), color var(--t);
+.instance-select{
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .instance-select:hover {

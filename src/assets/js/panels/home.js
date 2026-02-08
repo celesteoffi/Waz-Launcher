@@ -27,21 +27,21 @@ class Home {
         let blockNews = document.createElement('div');
         blockNews.classList.add('news-block');
         blockNews.innerHTML = `
-                    <div class="news-header">
-                        <img class="server-status-icon" src="assets/images/icon.png">
-                        <div class="header-text">
-                            <div class="title">Aucun news n'ai actuellement disponible.</div>
-                        </div>
-                        <div class="date">
-                            <div class="day">1</div>
-                            <div class="month">Janvier</div>
-                        </div>
-                    </div>
-                    <div class="news-content">
-                        <div class="bbWrapper">
-                            <p>Vous pourrez suivre ici toutes les news relative au serveur.</p>
-                        </div>
-                    </div>`
+          <div class="news-header">
+            <img class="server-status-icon" src="assets/images/icon.png">
+            <div class="header-text">
+              <div class="title">Aucun news n'ai actuellement disponible.</div>
+            </div>
+            <div class="date">
+              <div class="day">1</div>
+              <div class="month">Janvier</div>
+            </div>
+          </div>
+          <div class="news-content">
+            <div class="bbWrapper">
+              <p>Vous pourrez suivre ici toutes les news relative au serveur.</p>
+            </div>
+          </div>`
         newsElement.appendChild(blockNews);
       } else {
         for (let News of news) {
@@ -49,22 +49,22 @@ class Home {
           let blockNews = document.createElement('div');
           blockNews.classList.add('news-block');
           blockNews.innerHTML = `
-                        <div class="news-header">
-                            <img class="server-status-icon" src="assets/images/icon.png">
-                            <div class="header-text">
-                                <div class="title">${News.title}</div>
-                            </div>
-                            <div class="date">
-                                <div class="day">${date.day}</div>
-                                <div class="month">${date.month}</div>
-                            </div>
-                        </div>
-                        <div class="news-content">
-                            <div class="bbWrapper">
-                                <p>${News.content.replace(/\n/g, '</br>')}</p>
-                                <p class="news-author">Auteur - <span>${News.author}</span></p>
-                            </div>
-                        </div>`
+            <div class="news-header">
+              <img class="server-status-icon" src="assets/images/icon.png">
+              <div class="header-text">
+                <div class="title">${News.title}</div>
+              </div>
+              <div class="date">
+                <div class="day">${date.day}</div>
+                <div class="month">${date.month}</div>
+              </div>
+            </div>
+            <div class="news-content">
+              <div class="bbWrapper">
+                <p>${(News.content ?? '').replace(/\n/g, '</br>')}</p>
+                <p class="news-author">Auteur - <span>${News.author ?? 'Inconnu'}</span></p>
+              </div>
+            </div>`
           newsElement.appendChild(blockNews);
         }
       }
@@ -72,37 +72,79 @@ class Home {
       let blockNews = document.createElement('div');
       blockNews.classList.add('news-block');
       blockNews.innerHTML = `
-                <div class="news-header">
-                        <img class="server-status-icon" src="assets/images/icon.png">
-                        <div class="header-text">
-                            <div class="title">Error.</div>
-                        </div>
-                        <div class="date">
-                            <div class="day">1</div>
-                            <div class="month">Janvier</div>
-                        </div>
-                    </div>
-                    <div class="news-content">
-                        <div class="bbWrapper">
-                            <p>Impossible de contacter le serveur des news.</br>Merci de vérifier votre configuration.</p>
-                        </div>
-                    </div>`
+        <div class="news-header">
+          <img class="server-status-icon" src="assets/images/icon.png">
+          <div class="header-text">
+            <div class="title">Error.</div>
+          </div>
+          <div class="date">
+            <div class="day">1</div>
+            <div class="month">Janvier</div>
+          </div>
+        </div>
+        <div class="news-content">
+          <div class="bbWrapper">
+            <p>Impossible de contacter le serveur des news.</br>Merci de vérifier votre configuration.</p>
+          </div>
+        </div>`
       newsElement.appendChild(blockNews);
     }
   }
 
-  socialLick() {
-    let socials = document.querySelectorAll('.social-block')
+socialLick() {
+  const socials = document.querySelectorAll('.social-block');
 
-    socials.forEach(social => {
-      social.addEventListener('click', e => {
-        shell.openExternal(e.target.dataset.url)
-      })
+  socials.forEach(block => {
+    block.addEventListener('click', (e) => {
+      // ✅ Toujours récupérer l'élément .social-block même si on clique sur l'icône dedans
+      const el = e.currentTarget || e.target.closest('.social-block');
+      const url = el?.dataset?.url;
+
+      if (!url) {
+        console.warn('[SOCIAL] data-url vide sur .social-block', el);
+        return;
+      }
+      shell.openExternal(url);
     });
+  });
+}
+
+  async ensureConfigClient() {
+    let configClient = await this.db.readData('configClient')
+    configClient = configClient ?? {}
+
+    configClient.launcher_config = configClient.launcher_config ?? {
+      closeLauncher: "close-all", // close-all | close-launcher
+      download_multi: 10,
+      intelEnabledMac: false
+    }
+
+    configClient.java_config = configClient.java_config ?? {
+      java_path: null,
+      java_memory: { min: 2, max: 4 }
+    }
+    configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 }
+    configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2
+    configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4
+
+    configClient.game_config = configClient.game_config ?? {
+      screen_size: { width: 1280, height: 720 }
+    }
+    configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 }
+    configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280
+    configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720
+
+    // instance selection field
+    if (configClient.instance_selct === undefined) configClient.instance_selct = null
+
+    // (Optionnel) sauver en DB si le schema était incomplet
+    try { await this.db.updateData('configClient', configClient) } catch (e) { /* ignore */ }
+
+    return configClient
   }
 
   async instancesSelect() {
-    let configClient = await this.db.readData('configClient')
+    let configClient = await this.ensureConfigClient()
     let auth = await this.db.readData('accounts', configClient.account_selected)
     let instancesList = await config.getInstanceList()
     let instanceSelect = instancesList.find(i => i.name == configClient?.instance_selct) ? configClient?.instance_selct : null
@@ -118,9 +160,9 @@ class Home {
     }
 
     if (!instanceSelect) {
-      let newInstanceSelect = instancesList.find(i => i.whitelistActive == false)
-      let configClient = await this.db.readData('configClient')
-      configClient.instance_selct = newInstanceSelect?.name ?? instancesList[0]?.name
+      let newInstanceSelect = instancesList.find(i => i.whitelistActive == false) ?? instancesList[0]
+      let configClient = await this.ensureConfigClient()
+      configClient.instance_selct = newInstanceSelect?.name ?? null
       instanceSelect = configClient.instance_selct
       await this.db.updateData('configClient', configClient)
     }
@@ -130,20 +172,22 @@ class Home {
         let whitelist = instance.whitelist?.find(whitelist => whitelist == auth?.name)
         if (whitelist !== auth?.name) {
           if (instance.name == instanceSelect) {
-            let newInstanceSelect = instancesList.find(i => i.whitelistActive == false)
-            let configClient = await this.db.readData('configClient')
-            configClient.instance_selct = newInstanceSelect?.name ?? instancesList[0]?.name
+            let newInstanceSelect = instancesList.find(i => i.whitelistActive == false) ?? instancesList[0]
+            let configClient = await this.ensureConfigClient()
+            configClient.instance_selct = newInstanceSelect?.name ?? null
             instanceSelect = configClient.instance_selct
             setStatus(newInstanceSelect?.status ?? instance.status)
             await this.db.updateData('configClient', configClient)
           }
         }
-      } else console.log(`Initializing instance ${instance.name}...`)
+      } else {
+        console.log(`Initializing instance ${instance.name}...`)
+      }
       if (instance.name == instanceSelect) setStatus(instance.status)
     }
 
     instancePopup.addEventListener('click', async e => {
-      let configClient = await this.db.readData('configClient')
+      let configClient = await this.ensureConfigClient()
 
       if (e.target.classList.contains('instance-elements')) {
         let newInstanceSelect = e.target.id
@@ -155,7 +199,7 @@ class Home {
         configClient.instance_selct = newInstanceSelect
         await this.db.updateData('configClient', configClient)
 
-        // ✅ FIX: ne pas mettre un tableau, garder un string
+        // ✅ FIX: ne pas mettre un tableau
         instanceSelect = newInstanceSelect
 
         instancePopup.style.display = 'none'
@@ -166,7 +210,7 @@ class Home {
     })
 
     instanceBTN.addEventListener('click', async e => {
-      let configClient = await this.db.readData('configClient')
+      let configClient = await this.ensureConfigClient()
       let instanceSelect = configClient.instance_selct
       let auth = await this.db.readData('accounts', configClient.account_selected)
 
@@ -203,7 +247,7 @@ class Home {
 
   async startGame() {
     let launch = new Launch()
-    let configClient = await this.db.readData('configClient')
+    let configClient = await this.ensureConfigClient()
     let instances = await config.getInstanceList()
     let authenticator = await this.db.readData('accounts', configClient.account_selected)
     let options = instances.find(i => i.name == configClient.instance_selct)
@@ -259,14 +303,14 @@ class Home {
 
     let opt = {
       url: options.url,
-      authenticator: authenticator,
+      authenticator,
       timeout: 10000,
       path: `${await appdata()}/${process.platform == 'darwin' ? this.config.dataDirectory : `.${this.config.dataDirectory}`}`,
       instance: options.name,
       version: minecraftVersion,
-      detached: configClient.launcher_config.closeLauncher == "close-all" ? false : true,
-      downloadFileMultiple: configClient.launcher_config.download_multi,
-      intelEnabledMac: configClient.launcher_config.intelEnabledMac,
+      detached: configClient.launcher_config?.closeLauncher == "close-all" ? false : true,
+      downloadFileMultiple: configClient.launcher_config?.download_multi ?? 10,
+      intelEnabledMac: configClient.launcher_config?.intelEnabledMac ?? false,
 
       loader: {
         type: loaderType,
@@ -276,17 +320,16 @@ class Home {
 
       verify: options.verify,
       ignored: [...(options.ignored ?? [])],
-
-      javaPath: configClient.java_config.java_path,
+      javaPath: configClient.java_config?.java_path ?? null,
 
       screen: {
-        width: configClient.game_config.screen_size.width,
-        height: configClient.game_config.screen_size.height
+        width: configClient.game_config?.screen_size?.width ?? 1280,
+        height: configClient.game_config?.screen_size?.height ?? 720
       },
 
       memory: {
-        min: `${configClient.java_config.java_memory.min * 1024}M`,
-        max: `${configClient.java_config.java_memory.max * 1024}M`
+        min: `${((configClient.java_config?.java_memory?.min ?? 2) * 1024)}M`,
+        max: `${((configClient.java_config?.java_memory?.max ?? 4) * 1024)}M`
       }
     }
 
@@ -335,7 +378,7 @@ class Home {
 
     launch.on('data', (e) => {
       progressBar.style.display = "none"
-      if (configClient.launcher_config.closeLauncher == 'close-launcher') {
+      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
         ipcRenderer.send("main-window-hide")
       };
       new logger('Minecraft', '#36b030');
@@ -345,7 +388,7 @@ class Home {
     })
 
     launch.on('close', code => {
-      if (configClient.launcher_config.closeLauncher == 'close-launcher') {
+      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
         ipcRenderer.send("main-window-show")
       };
       ipcRenderer.send('main-window-progress-reset')
@@ -366,7 +409,7 @@ class Home {
         options: true
       })
 
-      if (configClient.launcher_config.closeLauncher == 'close-launcher') {
+      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
         ipcRenderer.send("main-window-show")
       };
       ipcRenderer.send('main-window-progress-reset')
