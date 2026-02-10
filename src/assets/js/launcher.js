@@ -9,6 +9,18 @@ import Settings from './panels/settings.js';
 
 // import modules
 import { logger, config, changePanel, database, popup, setBackground, accountSelect, addAccount, pkg } from './utils.js';
+import { rpcSet } from "./utils/discordRpc.js";
+
+rpcSet({
+  details: "Playing Minecraft",
+  state: "In game",
+  largeImageKey: "logo",
+  largeImageText: "Launcher",
+  smallImageKey: "play",          // optional asset
+  smallImageText: "Playing",      // optional
+});
+
+
 const { AZauth, Microsoft, Mojang } = require('minecraft-java-core');
 
 // libs

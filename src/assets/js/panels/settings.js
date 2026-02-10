@@ -4,6 +4,15 @@
  */
 
 import { changePanel, accountSelect, database, Slider, config, setStatus, popup, appdata, setBackground } from '../utils.js'
+import { rpcSet } from "../utils/discordRpc.js";
+
+rpcSet({
+  details: "In the launcher",
+  state: "Settings",
+  largeImageKey: "logo",
+  largeImageText: "Launcher",
+});
+
 const { ipcRenderer } = require('electron');
 const os = require('os');
 

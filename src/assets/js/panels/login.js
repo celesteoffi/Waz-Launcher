@@ -4,8 +4,19 @@
  */
 const { AZauth, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
+import { rpcSet } from "../utils/discordRpc.js";
+
+rpcSet({
+  details: "In the launcher",
+  state: "Login",
+  largeImageKey: "logo",
+  largeImageText: "Launcher",
+});
+
 
 import { popup, database, changePanel, accountSelect, addAccount, config, setStatus } from '../utils.js';
+
+
 
 class Login {
     static id = "login";

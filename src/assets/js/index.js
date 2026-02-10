@@ -8,9 +8,16 @@ const pkg = require("../package.json");
 const os = require("os");
 const nodeFetch = require("node-fetch");
 
+require("dotenv").config();
+
+
 import { config, database } from "./utils.js";
+import { rpcSet, rpcClear } from "./utils/discordRpc.js";
 
 /* ------------------------------ Helpers ---------------------------------- */
+
+const DISCORD_RPC_CLIENT_ID =
+  process.env.DISCORD_RPC_CLIENT_ID || "1470721616550826105"; // <- TON Application ID
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -81,6 +88,14 @@ class Splash {
 
   async init() {
     try {
+      // RPC: fenêtre update ouverte
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Démarrage (update window)…",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+
       // Theme
       const db = new database();
       const configClient = await db.readData("configClient");
@@ -96,6 +111,12 @@ class Splash {
       await this.checkUpdateFlow();
     } catch (err) {
       console.error(err);
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Erreur au démarrage",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
       this.shutdown(`Erreur au démarrage :<br>${this.escapeHtml(err.message || String(err))}`);
     }
   }
@@ -104,6 +125,14 @@ class Splash {
 
   async playIntro() {
     if (this.splashRoot) this.splashRoot.style.display = "block";
+
+    // Presence pendant l’anim
+    rpcSet({
+      details: "UniverCraft Launcher",
+      state: "Initialisation…",
+      largeImageKey: "logo",
+      largeImageText: "UniverCraft",
+    });
 
     // Message initial (random) + rotation douce
     this.setSplash(this.randomSplash());
@@ -134,6 +163,16 @@ class Splash {
   setSplash({ message, author }) {
     if (this.splashMessage) this.splashMessage.textContent = message || "";
     if (this.authorSpan) this.authorSpan.textContent = author ? `@${author}` : "";
+
+    // RPC: on suit les splash (léger)
+    rpcSet({
+      details: "UniverCraft Launcher",
+      state: message || "Initialisation…",
+      largeImageKey: "logo",
+      largeImageText: "UniverCraft",
+      smallImageKey: "download",
+      smallImageText: "Préparation",
+    });
   }
 
   /* ------------------------------ Update flow ----------------------------- */
@@ -143,6 +182,15 @@ class Splash {
     this.hideDownloadButton();
     this.hideProgress();
 
+    rpcSet({
+      details: "UniverCraft Launcher",
+      state: "Recherche de mise à jour…",
+      largeImageKey: "logo",
+      largeImageText: "UniverCraft",
+      smallImageKey: "download",
+      smallImageText: "Update",
+    });
+
     this.bindIpcOnce();
 
     try {
@@ -151,6 +199,12 @@ class Splash {
       // => Suite via events: updateAvailable / update-not-available / error
     } catch (err) {
       console.error(err);
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Erreur update",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
       this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${this.escapeHtml(err.message)}`);
     }
   }
@@ -162,6 +216,15 @@ class Splash {
     // Update disponible
     ipcRenderer.on("updateAvailable", async () => {
       if (this._closing) return;
+
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Mise à jour disponible",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+        smallImageKey: "download",
+        smallImageText: "Update",
+      });
 
       // stop rotation messages
       this.stopSplashRotation();
@@ -193,6 +256,28 @@ class Splash {
       this.setProgress(transferred, total);
       this.updatePercent(transferred, total);
 
+      // RPC update % (pas trop long)
+      if (total > 0) {
+        const pct = Math.floor((transferred / total) * 100);
+        rpcSet({
+          details: "UniverCraft Launcher",
+          state: `Téléchargement MAJ… (${pct}%)`,
+          largeImageKey: "logo",
+          largeImageText: "UniverCraft",
+          smallImageKey: "download",
+          smallImageText: `${pct}%`,
+        });
+      } else {
+        rpcSet({
+          details: "UniverCraft Launcher",
+          state: "Téléchargement MAJ…",
+          largeImageKey: "logo",
+          largeImageText: "UniverCraft",
+          smallImageKey: "download",
+          smallImageText: "Update",
+        });
+      }
+
       // Status plus "premium"
       if (total > 0) {
         const pct = Math.floor((transferred / total) * 100);
@@ -206,6 +291,13 @@ class Splash {
     ipcRenderer.on("update-not-available", async () => {
       if (this._closing) return;
 
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Aucune mise à jour",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+
       this.stopSplashRotation();
       this.setStatus("Aucune mise à jour disponible.");
       await sleep(500);
@@ -216,6 +308,14 @@ class Splash {
     ipcRenderer.on("error", (event, err) => {
       if (this._closing) return;
       const msg = err?.message || String(err || "Erreur inconnue");
+
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Erreur updater",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+
       this.shutdown(this.escapeHtml(msg));
     });
   }
@@ -242,6 +342,15 @@ class Splash {
 
   async downloadUpdateExternal() {
     try {
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Récupération release GitHub…",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+        smallImageKey: "download",
+        smallImageText: "GitHub",
+      });
+
       this.setStatus("Récupération de la dernière version…");
 
       const repoURL = pkg.repository.url
@@ -268,35 +377,66 @@ class Splash {
         picked = this.getLatestReleaseForOS("mac", ".dmg", assets);
       } else if (os.platform() === "linux") {
         // AppImage recommandé
-        picked = this.getLatestReleaseForOS("linux", ".appimage", assets) ||
-                 this.getLatestReleaseForOS("linux", ".deb", assets);
+        picked = this.getLatestReleaseForOS("linux", ".appimage", assets) || this.getLatestReleaseForOS("linux", ".deb", assets);
       }
 
       if (!picked) {
+        rpcSet({
+          details: "UniverCraft Launcher",
+          state: "Update dispo (ouvrir GitHub)",
+          largeImageKey: "logo",
+          largeImageText: "UniverCraft",
+        });
+
         this.setStatus(
           `Mise à jour disponible, mais aucun fichier compatible n’a été trouvé.<br>` +
-          `<span style="opacity:.8">Ouvre la page GitHub pour télécharger.</span><br>` +
-          `<div class="download-update" id="download-update-btn">Ouvrir GitHub</div>`
+            `<span style="opacity:.8">Ouvre la page GitHub pour télécharger.</span><br>` +
+            `<div class="download-update" id="download-update-btn">Ouvrir GitHub</div>`
         );
         this.attachDownloadButton(() => shell.openExternal(latest?.html_url || pkg.homepage));
         return;
       }
 
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: `Update dispo: ${picked.name}`,
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+        smallImageKey: "download",
+        smallImageText: "Télécharger",
+      });
+
       this.setStatus(
         `Mise à jour disponible !<br>` +
-        `<span style="opacity:.8">${this.escapeHtml(picked.name)}</span><br>` +
-        `<div class="download-update" id="download-update-btn">Télécharger</div>`
+          `<span style="opacity:.8">${this.escapeHtml(picked.name)}</span><br>` +
+          `<div class="download-update" id="download-update-btn">Télécharger</div>`
       );
 
       this.attachDownloadButton(() => {
         shell.openExternal(picked.browser_download_url);
+
+        rpcSet({
+          details: "UniverCraft Launcher",
+          state: "Téléchargement lancé (externe)",
+          largeImageKey: "logo",
+          largeImageText: "UniverCraft",
+        });
+
         this.shutdown("Téléchargement lancé…");
       });
     } catch (err) {
       console.error(err);
+
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Erreur GitHub (fallback)",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+
       this.setStatus(
         `Impossible de récupérer la mise à jour.<br>` +
-        `<span style="opacity:.85">Vérifie ta connexion internet.</span>`
+          `<span style="opacity:.85">Vérifie ta connexion internet.</span>`
       );
       await sleep(900);
       return this.maintenanceCheck(); // fallback: continue
@@ -327,19 +467,36 @@ class Splash {
 
   async maintenanceCheck() {
     try {
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Vérification services…",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+
       this.setStatus("Vérification de l’état des services…");
       const res = await config.GetConfig();
 
       if (res?.maintenance) {
+        rpcSet({
+          details: "UniverCraft Launcher",
+          state: "Maintenance en cours",
+          largeImageKey: "logo",
+          largeImageText: "UniverCraft",
+        });
         return this.shutdown(res.maintenance_message || "Maintenance en cours.");
       }
 
       return this.startLauncher();
     } catch (e) {
       console.error(e);
-      return this.shutdown(
-        "Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement."
-      );
+      rpcSet({
+        details: "UniverCraft Launcher",
+        state: "Offline (pas d'internet)",
+        largeImageKey: "logo",
+        largeImageText: "UniverCraft",
+      });
+      return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
     }
   }
 
@@ -347,6 +504,15 @@ class Splash {
     this.setStatus("Démarrage du launcher…");
     this._closing = true;
     this.stopSplashRotation();
+
+    rpcSet({
+      details: "UniverCraft Launcher",
+      state: "Ouverture du launcher…",
+      largeImageKey: "logo",
+      largeImageText: "UniverCraft",
+      smallImageKey: "play",
+      smallImageText: "Launch",
+    });
 
     ipcRenderer.send("main-window-open");
     ipcRenderer.send("update-window-close");
@@ -389,6 +555,13 @@ class Splash {
     this.stopSplashRotation();
     this.hideDownloadButton();
 
+    rpcSet({
+      details: "UniverCraft Launcher",
+      state: "Fermeture / arrêt…",
+      largeImageKey: "logo",
+      largeImageText: "UniverCraft",
+    });
+
     const safe = text || "Arrêt…";
     this.setStatus(`${safe}<br><span style="opacity:.85">Arrêt dans <b id="shutdown-count">5</b>s</span>`);
 
@@ -399,6 +572,10 @@ class Splash {
       if (el) el.textContent = String(clamp(i, 0, 99));
       if (i <= 0) {
         clearInterval(timer);
+
+        // optionnel : clear presence si tu veux
+        // rpcClear();
+
         ipcRenderer.send("update-window-close");
       }
     }, 1000);
