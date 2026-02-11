@@ -508,18 +508,18 @@ class Splash {
     this.message.innerHTML = html;
   }
 
-  showProgress() {
-    if (!this.progress) return;
-    this.progress.classList.add("show");
-    if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
-  }
+showProgress() {
+  const wrap = document.getElementById("progress-wrap");
+  if (wrap) wrap.classList.add("show");
+  if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
+}
 
-  hideProgress() {
-    if (!this.progress) return;
-    this.progress.classList.remove("show");
-    this.setProgress(0, 0);
-    this.updatePercent(0, 0);
-  }
+hideProgress() {
+  const wrap = document.getElementById("progress-wrap");
+  if (wrap) wrap.classList.remove("show");
+  this.setProgress(0, 0);
+  this.updatePercent(0, 0);
+}
 
   setProgress(value, max) {
     if (!this.progress) return;

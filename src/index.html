@@ -16,15 +16,13 @@
 
           <div class="splash-title">UNIVERCRAFT</div>
 
-          <!-- Ces 2 lignes sont remplies par ton JS -->
           <p class="splash-message"></p>
           <p class="splash-author"><span class="author"></span></p>
 
-          <!-- Texte status -->
           <p class="message">Recherche de mise à jour...</p>
 
-          <!-- Progress + infos -->
-          <div class="progress-wrap">
+          <!-- Progress -->
+          <div class="progress-wrap" id="progress-wrap">
             <div class="progress-top">
               <span class="hint">Téléchargement</span>
               <span class="percent" id="progress-percent">0%</span>
@@ -32,8 +30,7 @@
             <progress value="0" max="0" class="progress"></progress>
           </div>
 
-          <!-- Bouton optionnel si ton JS l’affiche -->
-          <!-- <div class="download-update">Télécharger la mise à jour</div> -->
+          <!-- Le bouton update est injecté par JS si besoin -->
         </div>
       </div>
     </div>

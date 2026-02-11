@@ -2,144 +2,128 @@
 @import "theme.css";
 
 /* ========================================================================== */
-/* Loading / Splash - UniverCraft (premium glass)                              */
+/* Splash / Loading - UniverCraft (clean + stable)                             */
 /* ========================================================================== */
 
 :root{
   --accent: #00d084;
-  --accent2: #00c2ff;
+  --accent2:#00c2ff;
 
-  --text: rgba(245,245,245,0.95);
-  --text-dim: rgba(245,245,245,0.70);
+  --text: rgba(245,245,245,.94);
+  --muted: rgba(245,245,245,.68);
 
-  --glass: rgba(255,255,255,0.08);
-  --glass-strong: rgba(255,255,255,0.12);
-  --stroke: rgba(255,255,255,0.14);
+  --card: rgba(255,255,255,.08);
+  --card2: rgba(255,255,255,.12);
+  --stroke: rgba(255,255,255,.14);
 
-  --shadow: 0 24px 60px rgba(0,0,0,0.55);
-  --shadow2: 0 12px 28px rgba(0,0,0,0.45);
+  --shadow: 0 22px 56px rgba(0,0,0,.55);
+  --shadow2: 0 12px 28px rgba(0,0,0,.45);
 
   --radius: 22px;
-
   --t: 220ms ease;
-  --t2: 420ms cubic-bezier(.2,.8,.2,1);
+  --t2: 520ms cubic-bezier(.2,.8,.2,1);
 }
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-html, body{
-  height:100%;
-}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html, body{ height:100%; }
 
 body{
-  font-family:"Poppins", system-ui, -apple-system, sans-serif;
+  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: var(--background);
   color: var(--text);
   overflow:hidden;
   -webkit-font-smoothing: antialiased;
-  position: relative;
+  position:relative;
 }
 
-/* Fond + overlay stylé */
 body::before{
   content:"";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+  position:fixed;
+  inset:0;
+  z-index:0;
   pointer-events:none;
-
-  /* Si ton theme.css fournit déjà un background-image, ça s’adapte quand même */
   background:
-    radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.14), transparent 60%),
-    radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.12), transparent 62%),
-    radial-gradient(1200px 900px at 50% 75%, rgba(0,0,0,0.55), transparent 55%),
-    linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.75));
+    radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.15), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.14), transparent 62%),
+    radial-gradient(1200px 900px at 50% 80%, rgba(0,0,0,0.55), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.78));
 }
 
-/* Eviter drag/select */
-img{
-  -webkit-user-drag: none;
-  user-select: none;
-}
+img{ -webkit-user-drag:none; user-select:none; }
 
 /* ========================================================================== */
-/* Splash wrapper                                                             */
+/* Root wrapper                                                                */
 /* ========================================================================== */
 
 #splash{
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  width: 100%;
-  display: grid;
-  place-items: center;
+  position:relative;
+  z-index:1;
+  height:100%;
+  width:100%;
+  display:grid;
+  place-items:center;
   padding: 26px;
 }
 
-/* Carte centrale */
+/* Carte */
 .splash-card{
-  width: min(520px, 92vw);
+  width: min(540px, 92vw);
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
-  background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.06));
+  background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.06));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-
   box-shadow: var(--shadow);
-  overflow: hidden;
-  position: relative;
+  overflow:hidden;
+  position:relative;
 }
 
-/* Ligne accent en haut */
 .splash-card::before{
   content:"";
   position:absolute;
   left:0; right:0; top:0;
-  height: 2px;
+  height:2px;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
-  opacity: 0.85;
+  opacity:.9;
 }
 
-/* Glow subtil derrière */
 .splash-card::after{
   content:"";
   position:absolute;
   inset:-120px;
   background:
-    radial-gradient(320px 220px at 30% 25%, rgba(0,194,255,0.18), transparent 60%),
+    radial-gradient(320px 220px at 30% 25%, rgba(0,194,255,0.20), transparent 60%),
     radial-gradient(320px 220px at 70% 65%, rgba(0,208,132,0.16), transparent 60%);
   filter: blur(18px);
-  opacity: 0.75;
+  opacity:.75;
   pointer-events:none;
 }
 
-/* Contenu */
 .splash-inner{
-  position: relative;
-  z-index: 1;
-  padding: 26px 26px 22px 26px;
+  position:relative;
+  z-index:1;
+  padding: 26px 26px 22px;
   display:flex;
   flex-direction:column;
-  gap: 14px;
+  gap: 12px;
   align-items:center;
   text-align:center;
 }
 
-/* Logo */
+/* ========================================================================== */
+/* Logo + title                                                                */
+/* ========================================================================== */
+
 .splash-logo-wrap{
   width: 118px;
   height: 118px;
   border-radius: 26px;
   border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.22);
+  background: rgba(0,0,0,0.20);
   display:grid;
   place-items:center;
   box-shadow: var(--shadow2);
-  position: relative;
+  position:relative;
   overflow:hidden;
 }
 
@@ -149,57 +133,57 @@ img{
   inset:-40px;
   background: radial-gradient(circle at 40% 30%, rgba(0,194,255,0.22), transparent 55%);
   filter: blur(12px);
-  opacity: .9;
+  opacity:.9;
 }
 
 .splash-logo{
   width: 86px;
   height: 86px;
   border-radius: 20px;
-  z-index: 1;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  z-index:1;
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
 }
 
-/* Titre */
 .splash-title{
   font-weight: 900;
   letter-spacing: 4px;
   text-transform: uppercase;
   font-size: 1.25rem;
-  margin-top: 2px;
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  text-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  -webkit-background-clip:text;
+  background-clip:text;
+  text-shadow: 0 10px 24px rgba(0,0,0,.35);
 }
 
-/* Messages */
+/* ========================================================================== */
+/* Texts                                                                       */
+/* ========================================================================== */
+
 .splash-message{
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 800;
-  color: var(--text);
   line-height: 1.25;
   min-height: 1.4em;
 }
 
 .splash-author{
   font-size: 0.80rem;
-  color: var(--text-dim);
+  color: var(--muted);
   min-height: 1.2em;
 }
 
 .splash-author .author{
   font-weight: 900;
-  color: rgba(245,245,245,0.85);
+  color: rgba(245,245,245,0.86);
 }
 
-/* Message status bas (update / download / etc.) */
 .message{
   margin-top: 6px;
   font-size: 0.98rem;
   font-weight: 800;
-  color: rgba(245,245,245,0.88);
+  color: rgba(245,245,245,0.90);
+  min-height: 1.4em;
 }
 
 /* ========================================================================== */
@@ -207,33 +191,45 @@ img{
 /* ========================================================================== */
 
 .progress-wrap{
-  width: 100%;
+  width:100%;
   margin-top: 6px;
   display:flex;
   flex-direction:column;
   gap: 10px;
+
+  /* IMPORTANT: évite le “bug visuel” quand JS hide/show */
+  opacity: 0;
+  max-height: 0;
+  overflow:hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--t2), max-height var(--t2), transform var(--t2);
+}
+
+.progress-wrap.show{
+  opacity: 1;
+  max-height: 120px;
+  transform: translateY(0);
 }
 
 .progress-top{
   display:flex;
-  justify-content: space-between;
+  justify-content:space-between;
   align-items:center;
   font-size: 0.85rem;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 .progress-top .percent{
   font-weight: 900;
-  color: rgba(245,245,245,0.88);
+  color: rgba(245,245,245,0.90);
 }
 
 progress.progress{
-  width: 100%;
+  width:100%;
   height: 10px;
-  appearance: none;
+  appearance:none;
   border-radius: 999px;
   overflow:hidden;
-  opacity: 1;
 }
 
 progress.progress::-webkit-progress-bar{
@@ -248,8 +244,9 @@ progress.progress::-webkit-progress-value{
 }
 
 /* ========================================================================== */
-/* Button (si tu l’utilises pour update)                                       */
+/* Button                                                                       */
 /* ========================================================================== */
+
 .download-update{
   width: 100%;
   height: 44px;
@@ -273,37 +270,32 @@ progress.progress::-webkit-progress-value{
 }
 
 /* ========================================================================== */
-/* Animations + states                                                         */
+/* Animations + compat                                                         */
 /* ========================================================================== */
 
-/* apparition */
 .fade-in{
   animation: fadeInUp .6s var(--t2) both;
 }
 
 @keyframes fadeInUp{
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
 }
 
-/* léger pulse sur logo */
 .pulse{
   animation: pulseGlow 1.9s ease-in-out infinite;
 }
 
 @keyframes pulseGlow{
-  0%, 100% { box-shadow: var(--shadow2); }
-  50%      { box-shadow: var(--shadow2), 0 0 22px rgba(0,194,255,0.18); }
+  0%,100% { box-shadow: var(--shadow2); }
+  50%     { box-shadow: var(--shadow2), 0 0 22px rgba(0,194,255,0.18); }
 }
 
-/* ========================================================================== */
-/* Compat: tes anciennes classes "opacity/translate/show" (si ton JS les utilise) */
-/* ========================================================================== */
+/* Compat anciennes classes (si ton JS les utilise encore) */
 .splash.opacity,
 .splash-message.opacity,
 .splash-author.opacity,
-.message.opacity,
-.progress.show{
+.message.opacity{
   opacity: 1 !important;
 }
 
