@@ -52,6 +52,16 @@ function rpcSet(presence) {
   } catch {}
 }
 
+/**
+ * ✅ Auto-fit window (renderer -> main)
+ * - Ne casse rien si le main n'a pas le listener
+ */
+function requestFit() {
+  try {
+    ipcRenderer.send("update-window-fit");
+  } catch {}
+}
+
 /* ------------------------------ Splash class ----------------------------- */
 
 class Splash {
@@ -64,7 +74,7 @@ class Splash {
     this.authorSpan = document.querySelector(".splash-author .author");
     this.message = document.querySelector(".message");
 
-    // ✅ IMPORTANT: on gère le wrapper ET la barre
+    // ✅ IMPORTANT: wrapper + barre
     this.progressWrap = document.querySelector(".progress-wrap");
     this.progressBar = document.querySelector("progress.progress") || document.querySelector(".progress");
     this.percentEl = document.getElementById("progress-percent");
@@ -110,6 +120,8 @@ class Splash {
 
       await this.playIntro();
       await this.checkUpdateFlow();
+
+      requestFit();
     } catch (err) {
       console.error(err);
 
@@ -144,6 +156,8 @@ class Splash {
     this.splashAuthor?.classList.add("opacity");
     this.message?.classList.add("opacity");
 
+    requestFit();
+
     // Rotation messages toutes les 2.6s (jusqu’à update)
     this._interval = setInterval(() => {
       if (this._closing) return;
@@ -176,6 +190,8 @@ class Splash {
       largeImageKey: "logo",
       largeImageText: "UniverCraft",
     });
+
+    requestFit();
   }
 
   /* ------------------------------ Update flow ----------------------------- */
@@ -209,6 +225,8 @@ class Splash {
       });
 
       this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${this.escapeHtml(err.message)}`);
+    } finally {
+      requestFit();
     }
   }
 
@@ -236,10 +254,12 @@ class Splash {
         this.showProgress();
         this.setProgress(0, 1);
         ipcRenderer.send("start-update");
+        requestFit();
         return;
       }
 
       await this.downloadUpdateExternal();
+      requestFit();
     });
 
     ipcRenderer.on("download-progress", (event, progress) => {
@@ -278,6 +298,8 @@ class Splash {
 
         this.setStatus("Téléchargement de la mise à jour…");
       }
+
+      requestFit();
     });
 
     ipcRenderer.on("update-not-available", async () => {
@@ -294,6 +316,7 @@ class Splash {
       this.setStatus("Aucune mise à jour disponible.");
       await sleep(500);
       await this.maintenanceCheck();
+      requestFit();
     });
 
     ipcRenderer.on("error", (event, err) => {
@@ -308,6 +331,7 @@ class Splash {
       });
 
       this.shutdown(this.escapeHtml(msg));
+      requestFit();
     });
   }
 
@@ -377,6 +401,7 @@ class Splash {
             `<div class="download-update" id="download-update-btn">Ouvrir GitHub</div>`
         );
         this.attachDownloadButton(() => shell.openExternal(latest?.html_url || pkg.homepage));
+        requestFit();
         return;
       }
 
@@ -398,6 +423,8 @@ class Splash {
 
         this.shutdown("Téléchargement lancé…");
       });
+
+      requestFit();
     } catch (err) {
       console.error(err);
 
@@ -413,6 +440,7 @@ class Splash {
           `<span style="opacity:.85">Vérifie ta connexion internet.</span>`
       );
       await sleep(900);
+      requestFit();
       return this.maintenanceCheck();
     }
   }
@@ -428,12 +456,16 @@ class Splash {
 
     fresh.addEventListener("click", onClick);
     this.downloadBtn = fresh;
+
+    requestFit();
   }
 
   hideDownloadButton() {
     const btn = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (btn) btn.remove();
     this.downloadBtn = null;
+
+    requestFit();
   }
 
   /* ------------------------------ Maintenance / start ---------------------- */
@@ -472,6 +504,8 @@ class Splash {
       });
 
       return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
+    } finally {
+      requestFit();
     }
   }
 
@@ -489,6 +523,8 @@ class Splash {
       smallImageText: "Launch",
     });
 
+    requestFit();
+
     ipcRenderer.send("main-window-open");
     ipcRenderer.send("update-window-close");
   }
@@ -498,18 +534,21 @@ class Splash {
   setStatus(html) {
     if (!this.message) return;
     this.message.innerHTML = html;
+    requestFit();
   }
 
   // ✅ Compatible avec TON CSS clean: .progress-wrap.show
   showProgress() {
     if (this.progressWrap) this.progressWrap.classList.add("show");
     if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
+    requestFit();
   }
 
   hideProgress() {
     if (this.progressWrap) this.progressWrap.classList.remove("show");
     this.setProgress(0, 0);
     this.updatePercent(0, 0);
+    requestFit();
   }
 
   setProgress(value, max) {
@@ -521,6 +560,7 @@ class Splash {
   updatePercent(value, max) {
     if (!this.percentEl) return;
     this.percentEl.textContent = formatPercent(value, max);
+    requestFit();
   }
 
   shutdown(text) {
@@ -539,11 +579,15 @@ class Splash {
     const safe = text || "Arrêt…";
     this.setStatus(`${safe}<br><span style="opacity:.85">Arrêt dans <b id="shutdown-count">5</b>s</span>`);
 
+    requestFit();
+
     let i = 5;
     const timer = setInterval(() => {
       i -= 1;
       const el = document.getElementById("shutdown-count");
       if (el) el.textContent = String(clamp(i, 0, 99));
+      requestFit();
+
       if (i <= 0) {
         clearInterval(timer);
         ipcRenderer.send("update-window-close");
