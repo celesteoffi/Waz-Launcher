@@ -4,6 +4,7 @@
  */
 import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from '../utils.js'
 import { rpcSet } from "../utils/discordRpc.js";
+import { SkinViewer, IdleAnimation } from "skinview3d";
 
 rpcSet({
   details: "In the launcher",
@@ -11,7 +12,6 @@ rpcSet({
   largeImageKey: "logo",
   largeImageText: "Launcher",
 });
-
 
 const { Launch } = require('minecraft-java-core')
 const { shell, ipcRenderer } = require('electron')
@@ -25,8 +25,115 @@ class Home {
     this.news()
     this.socialLick()
     this.instancesSelect()
+
+    // ✅ AJOUT: init skin 3D (sans toucher .player-head)
+    this.initSkin3D().catch(e => console.warn('[SKIN3D] init error:', e));
+
     document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
   }
+
+  /* ===================== AJOUT SKINVIEW3D ===================== */
+
+  async initSkin3D() {
+    const canvas = document.getElementById("skin3d");
+    if (!canvas) return;
+
+    // cleanup si reload panel
+    this.destroySkin3D();
+
+    this.skinViewer = new SkinViewer({
+      canvas,
+      width: 256,
+      height: 256,
+    });
+
+    this.skinViewer.background = null;
+    this.skinViewer.fov = 55;
+    this.skinViewer.zoom = 0.95;
+    this.skinViewer.autoRotate = true;
+    this.skinViewer.autoRotateSpeed = 0.8;
+    this.skinViewer.animation = new IdleAnimation();
+
+    if (this.skinViewer.controls) {
+      this.skinViewer.controls.enableZoom = false;
+      this.skinViewer.controls.enablePan = false;
+      this.skinViewer.controls.enableRotate = true;
+    }
+
+    const info = await this.resolveSkinUrlSafe();
+    const label = document.getElementById("skin3d-name");
+    if (label) label.textContent = info?.name ? info.name : "Skin";
+
+    try {
+      if (info?.skinUrl) await this.skinViewer.loadSkin(info.skinUrl);
+    } catch (e) {
+      console.warn("[SKIN3D] loadSkin failed:", e);
+    }
+
+    // Resize propre (canvas suit le conteneur)
+    const wrapper = canvas.closest(".skin-view");
+    if (wrapper) {
+      const applySize = () => {
+        const r = wrapper.getBoundingClientRect();
+        const w = Math.max(64, Math.floor(r.width));
+        const h = Math.max(64, Math.floor(r.height));
+        this.skinViewer.setSize(w, h);
+      };
+      applySize();
+
+      this._skinResizeObs = new ResizeObserver(() => applySize());
+      this._skinResizeObs.observe(wrapper);
+    }
+  }
+
+  destroySkin3D() {
+    try {
+      if (this._skinResizeObs) {
+        this._skinResizeObs.disconnect();
+        this._skinResizeObs = null;
+      }
+      if (this.skinViewer) {
+        this.skinViewer.dispose();
+        this.skinViewer = null;
+      }
+    } catch {}
+  }
+
+  async resolveSkinUrlSafe() {
+    // fallback local (mets un png valide sinon change le chemin)
+    const fallbackLocal = "assets/images/default-skin.png";
+
+    const configClient = await this.ensureConfigClient();
+    const auth = await this.db.readData("accounts", configClient.account_selected);
+
+    const name =
+      auth?.name ||
+      auth?.username ||
+      auth?.profile?.name ||
+      "Joueur";
+
+    let uuid =
+      auth?.uuid ||
+      auth?.profile?.id ||
+      auth?.profile?.uuid ||
+      null;
+
+    if (uuid) uuid = String(uuid).replace(/-/g, "");
+
+    // UUID -> meilleur
+    if (uuid && uuid.length >= 32) {
+      return { name, skinUrl: `https://crafatar.com/skins/${uuid}` };
+    }
+
+    // nom -> fallback
+    if (name) {
+      return { name, skinUrl: `https://minotar.net/skin/${encodeURIComponent(name)}` };
+    }
+
+    return { name, skinUrl: fallbackLocal };
+  }
+
+  /* ============================================================ */
 
   async news() {
     let newsElement = document.querySelector('.news-list');
@@ -100,23 +207,22 @@ class Home {
     }
   }
 
-socialLick() {
-  const socials = document.querySelectorAll('.social-block');
+  socialLick() {
+    const socials = document.querySelectorAll('.social-block');
 
-  socials.forEach(block => {
-    block.addEventListener('click', (e) => {
-      // ✅ Toujours récupérer l'élément .social-block même si on clique sur l'icône dedans
-      const el = e.currentTarget || e.target.closest('.social-block');
-      const url = el?.dataset?.url;
+    socials.forEach(block => {
+      block.addEventListener('click', (e) => {
+        const el = e.currentTarget || e.target.closest('.social-block');
+        const url = el?.dataset?.url;
 
-      if (!url) {
-        console.warn('[SOCIAL] data-url vide sur .social-block', el);
-        return;
-      }
-      shell.openExternal(url);
+        if (!url) {
+          console.warn('[SOCIAL] data-url vide sur .social-block', el);
+          return;
+        }
+        shell.openExternal(url);
+      });
     });
-  });
-}
+  }
 
   async ensureConfigClient() {
     let configClient = await this.db.readData('configClient')
@@ -143,10 +249,8 @@ socialLick() {
     configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280
     configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720
 
-    // instance selection field
     if (configClient.instance_selct === undefined) configClient.instance_selct = null
 
-    // (Optionnel) sauver en DB si le schema était incomplet
     try { await this.db.updateData('configClient', configClient) } catch (e) { /* ignore */ }
 
     return configClient
@@ -208,7 +312,6 @@ socialLick() {
         configClient.instance_selct = newInstanceSelect
         await this.db.updateData('configClient', configClient)
 
-        // ✅ FIX: ne pas mettre un tableau
         instanceSelect = newInstanceSelect
 
         instancePopup.style.display = 'none'
@@ -266,7 +369,6 @@ socialLick() {
     let infoStarting = document.querySelector(".info-starting-game-text")
     let progressBar = document.querySelector('.progress-bar')
 
-    // ✅ Anti-crash: instance introuvable
     if (!options) {
       const p = new popup()
       p.openPopup({
@@ -279,7 +381,6 @@ socialLick() {
       return
     }
 
-    // ✅ Compat: "loader" OU "loadder" (typo fréquente)
     const loaderCfg = options.loader ?? options.loadder
 
     if (!loaderCfg) {
