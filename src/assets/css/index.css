@@ -2,7 +2,7 @@
 @import "theme.css";
 
 /* ========================================================================== */
-/* Splash / Loading - UniverCraft (clean + stable)                             */
+/* Splash / Loading - UniverCraft (responsive + centré + clean)                */
 /* ========================================================================== */
 
 :root{
@@ -25,7 +25,11 @@
 }
 
 *{ margin:0; padding:0; box-sizing:border-box; }
-html, body{ height:100%; }
+
+html, body{
+  width:100%;
+  height:100%;
+}
 
 body{
   font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -53,33 +57,48 @@ body::before{
 img{ -webkit-user-drag:none; user-select:none; }
 
 /* ========================================================================== */
-/* Root wrapper                                                                */
+/* Root wrapper : CENTRAGE FIX                                                 */
 /* ========================================================================== */
 
 #splash{
   position:relative;
   z-index:1;
-  height:100%;
+
   width:100%;
-  display:grid;
-  place-items:center;
-  padding: 14px;
+  height:100%;
+
+  /* ✅ le vrai fix : centre vertical + horizontal */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding: 18px;
 }
 
 /* ========================================================================== */
-/* Card                                                                        */
+/* Card : s’adapte à la fenêtre                                                */
 /* ========================================================================== */
 
 .splash-card{
   width: min(520px, 94vw);
+
+  /* ✅ évite le vide : taille mini + limite hauteur */
+  min-height: 320px;
+  max-height: calc(100vh - 36px);
+
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
+
   background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.06));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+
   box-shadow: var(--shadow);
   overflow:hidden;
   position:relative;
+
+  /* ✅ important : centre le contenu si la carte grandit */
+  display:flex;
 }
 
 .splash-card::before{
@@ -103,14 +122,27 @@ img{ -webkit-user-drag:none; user-select:none; }
   pointer-events:none;
 }
 
+/* ========================================================================== */
+/* Inner : contenu centré et responsive                                        */
+/* ========================================================================== */
+
 .splash-inner{
   position:relative;
   z-index:1;
-  padding: 22px 24px 20px;
+
+  width:100%;
+  height:100%;
+
+  /* ✅ centre vertical interne (plus de “bloc en haut”) */
   display:flex;
   flex-direction:column;
-  gap: 10px;
   align-items:center;
+  justify-content:center;
+
+  /* ✅ si petite fenêtre : on réduit proprement */
+  padding: clamp(18px, 3vh, 26px) clamp(18px, 3vw, 26px);
+  gap: 10px;
+
   text-align:center;
 }
 
@@ -119,13 +151,16 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-logo-wrap{
-  width: 104px;
-  height: 104px;
+  width: clamp(88px, 12vh, 104px);
+  height: clamp(88px, 12vh, 104px);
+
   border-radius: 26px;
   border: 1px solid rgba(255,255,255,0.16);
   background: rgba(0,0,0,0.20);
+
   display:grid;
   place-items:center;
+
   box-shadow: var(--shadow2);
   position:relative;
   overflow:hidden;
@@ -141,8 +176,8 @@ img{ -webkit-user-drag:none; user-select:none; }
 }
 
 .splash-logo{
-  width: 78px;
-  height: 78px;
+  width: clamp(66px, 9vh, 78px);
+  height: clamp(66px, 9vh, 78px);
   border-radius: 20px;
   z-index:1;
   box-shadow: 0 12px 28px rgba(0,0,0,.45);
@@ -152,11 +187,13 @@ img{ -webkit-user-drag:none; user-select:none; }
   font-weight: 900;
   letter-spacing: 3px;
   text-transform: uppercase;
-  font-size: 1.15rem;
+  font-size: clamp(1.0rem, 2.2vh, 1.15rem);
+
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   -webkit-background-clip:text;
   background-clip:text;
+
   text-shadow: 0 10px 24px rgba(0,0,0,.35);
 }
 
@@ -165,11 +202,12 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-message{
-  font-size: 1.03rem;
+  font-size: clamp(0.98rem, 2.2vh, 1.05rem);
   font-weight: 900;
   line-height: 1.25;
   min-height: 1.4em;
   color: rgba(255,255,255,0.95);
+  max-width: 92%;
 }
 
 .splash-author{
@@ -186,19 +224,25 @@ img{ -webkit-user-drag:none; user-select:none; }
 
 /* Status (pill) */
 .message{
-  margin-top: 10px;
+  margin-top: 12px;
+
   padding: 10px 14px;
   border-radius: 14px;
+
   background: rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.12);
+
   font-weight: 850;
   font-size: 0.98rem;
+
   width: 100%;
   min-height: 44px;
+
   display:flex;
   align-items:center;
   justify-content:center;
   text-align:center;
+
   color: rgba(245,245,245,0.92);
 }
 
@@ -213,7 +257,6 @@ img{ -webkit-user-drag:none; user-select:none; }
   flex-direction:column;
   gap: 10px;
 
-  /* caché par défaut */
   opacity: 0;
   max-height: 0;
   overflow:hidden;
