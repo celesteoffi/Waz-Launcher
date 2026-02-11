@@ -65,18 +65,12 @@ class Splash {
     this.authorSpan = document.querySelector(".splash-author .author");
     this.message = document.querySelector(".message");
     this.progress = document.querySelector("progress.progress") || document.querySelector(".progress");
-    this.percentEl = document.getElementById("progress-percent"); // nouveau
+    this.percentEl = document.getElementById("progress-percent");
     this.downloadBtn = null;
 
     this._interval = null;
     this._closing = false;
     this._listenersBound = false;
-
-    this.brand = {
-      name: "UniverCraft",
-      discordLabel: "Discord",
-      colors: ["#00c2ff", "#00d084"],
-    };
 
     this.splashes = [
       { message: "Connexion aux serveurs d’UniverCraft…", author: "UniverCraft" },
@@ -160,9 +154,18 @@ class Splash {
 
   setSplash({ message, author }) {
     if (this.splashMessage) this.splashMessage.textContent = message || "";
-    if (this.authorSpan) this.authorSpan.textContent = author ? `@${author}` : "";
 
-    // RPC: petit statut
+    // auteur => si vide, on cache la ligne (évite un trou)
+    if (this.splashAuthor) {
+      if (author) {
+        if (this.authorSpan) this.authorSpan.textContent = `@${author}`;
+        this.splashAuthor.style.display = "block";
+      } else {
+        this.splashAuthor.style.display = "none";
+      }
+    }
+
+    // RPC: statut léger
     rpcSet({
       details: "UniverCraft Launcher",
       state: message || "Initialisation…",
@@ -224,9 +227,7 @@ class Splash {
         smallImageText: "Update",
       });
 
-      // stop rotation messages
       this.stopSplashRotation();
-
       this.setStatus("Mise à jour disponible !");
       this.hideDownloadButton();
 
@@ -254,7 +255,6 @@ class Splash {
       this.setProgress(transferred, total);
       this.updatePercent(transferred, total);
 
-      // Status plus "premium"
       if (total > 0) {
         const pct = Math.floor((transferred / total) * 100);
 
@@ -325,7 +325,6 @@ class Splash {
   /* ------------------------------ External update (mac/linux) ------------- */
 
   getLatestReleaseForOS(osKey, preferredExt, assets) {
-    // osKey: 'mac' / 'linux'
     const list = (assets || []).filter((a) => {
       const name = (a.name || "").toLowerCase();
       return name.includes(osKey) && name.endsWith(preferredExt);
@@ -357,7 +356,6 @@ class Splash {
       const owner = repoURL[0];
       const repo = repoURL[1];
 
-      // API repos/releases (direct, fiable)
       const releases = await fetchJson(`https://api.github.com/repos/${owner}/${repo}/releases`, {
         timeout: 9000,
         headers: { Accept: "application/vnd.github+json" },
@@ -371,7 +369,6 @@ class Splash {
       if (os.platform() === "darwin") {
         picked = this.getLatestReleaseForOS("mac", ".dmg", assets);
       } else if (os.platform() === "linux") {
-        // AppImage recommandé
         picked =
           this.getLatestReleaseForOS("linux", ".appimage", assets) ||
           this.getLatestReleaseForOS("linux", ".deb", assets);
@@ -420,16 +417,14 @@ class Splash {
           `<span style="opacity:.85">Vérifie ta connexion internet.</span>`
       );
       await sleep(900);
-      return this.maintenanceCheck(); // fallback: continue
+      return this.maintenanceCheck();
     }
   }
 
   attachDownloadButton(onClick) {
-    // le bouton est injecté via innerHTML -> on récupère et on bind
     const btn = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!btn) return;
 
-    // éviter multi-bind
     btn.replaceWith(btn.cloneNode(true));
     const fresh = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!fresh) return;
@@ -508,18 +503,18 @@ class Splash {
     this.message.innerHTML = html;
   }
 
-showProgress() {
-  const wrap = document.getElementById("progress-wrap");
-  if (wrap) wrap.classList.add("show");
-  if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
-}
+  showProgress() {
+    const wrap = document.getElementById("progress-wrap");
+    if (wrap) wrap.classList.add("show");
+    if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
+  }
 
-hideProgress() {
-  const wrap = document.getElementById("progress-wrap");
-  if (wrap) wrap.classList.remove("show");
-  this.setProgress(0, 0);
-  this.updatePercent(0, 0);
-}
+  hideProgress() {
+    const wrap = document.getElementById("progress-wrap");
+    if (wrap) wrap.classList.remove("show");
+    this.setProgress(0, 0);
+    this.updatePercent(0, 0);
+  }
 
   setProgress(value, max) {
     if (!this.progress) return;

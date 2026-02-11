@@ -302,3 +302,82 @@ progress.progress::-webkit-progress-value{
 .splash.translate{
   transform: translate(-50%) translateY(-10px);
 }
+
+/* ===============================
+   Fix visuel UniverCraft (clean)
+   =============================== */
+
+/* Carte plus compacte */
+.splash-card{
+  width: min(520px, 94vw);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+/* Moins d’espace vide */
+.splash-inner{
+  padding: 22px 24px 20px;
+  gap: 10px;
+}
+
+/* Logo un peu plus petit (meilleur équilibre) */
+.splash-logo-wrap{
+  width: 104px;
+  height: 104px;
+}
+.splash-logo{
+  width: 78px;
+  height: 78px;
+}
+
+/* Titre plus lisible */
+.splash-title{
+  letter-spacing: 3px;
+  font-size: 1.15rem;
+}
+
+/* Message principal plus fort */
+.splash-message{
+  font-size: 1.03rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.95);
+}
+
+/* Auteur discret */
+.splash-author{
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.60);
+  margin-top: -4px;
+}
+
+/* Status (update / download) style "pill" propre */
+.message{
+  margin-top: 10px;
+  padding: 10px 14px;
+
+  border-radius: 14px;
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.12);
+
+  font-weight: 850;
+  font-size: 0.98rem;
+  width: 100%;
+}
+
+/* Animation douce pour la progress */
+.progress-wrap{
+  margin-top: 10px;
+
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transform: translateY(-4px);
+  transition: opacity .4s ease, max-height .4s ease, transform .4s ease;
+}
+
+.progress-wrap.show{
+  opacity: 1;
+  max-height: 120px;
+  transform: translateY(0);
+}
