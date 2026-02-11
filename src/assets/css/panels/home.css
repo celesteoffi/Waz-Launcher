@@ -1,5 +1,5 @@
 /* ========================================================================== */
-/* UniverCraft Launcher - CSS complet (stable + premium glass)                */
+/* UniverCraft Launcher - CSS complet (HOME refait + bouton Jouer premium)    */
 /* ========================================================================== */
 
 /* ----------------------------- Variables globales -------------------------- */
@@ -24,8 +24,8 @@
   --glow-accent: 0 0 18px rgba(0, 208, 132, 0.25);
   --glow-cyan: 0 0 18px rgba(0, 194, 255, 0.22);
 
-  --radius: 16px;
-  --radius-sm: 12px;
+  --radius: 18px;
+  --radius-sm: 14px;
 
   --t: 220ms ease;
   --t2: 360ms cubic-bezier(.2, .8, .2, 1);
@@ -34,12 +34,7 @@
 }
 
 /* ----------------------------- Reset / Base -------------------------------- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
 
 body {
@@ -49,11 +44,11 @@ body {
   background: url("images/minecraft_texture.jpg") no-repeat center center fixed;
   background-size: cover;
 
-  overflow: hidden; /* launcher fixe */
+  overflow: hidden;
   position: relative;
 }
 
-/* Overlay (NE BLOQUE PAS les clics) */
+/* Overlay (ne bloque pas les clics) */
 body::before {
   content: "";
   position: fixed;
@@ -61,14 +56,14 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(900px 500px at 50% 18%, rgba(0, 194, 255, 0.10), transparent 60%),
-    radial-gradient(800px 500px at 20% 35%, rgba(0, 208, 132, 0.10), transparent 62%),
-    linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.70)),
+    radial-gradient(900px 520px at 50% 18%, rgba(0, 194, 255, 0.10), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0, 208, 132, 0.10), transparent 62%),
+    radial-gradient(1000px 700px at 65% 75%, rgba(0,0,0,0.35), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.20), rgba(0,0,0,0.72)),
     var(--bg-overlay);
 }
 
 /* ----------------------------- Root container ------------------------------ */
-/* IMPORTANT: on met un vrai stacking context SANS casser tes positions */
 .home {
   position: relative;
   z-index: 1;
@@ -78,34 +73,31 @@ body::before {
 .home .container {
   height: 100%;
   width: 100%;
-  max-width: 1180px;
+  max-width: 1220px;
   margin: 0 auto;
 
   display: flex;
   flex-direction: column;
   align-items: center;
 
-  padding: 18px;
+  padding: 18px 18px 14px;
   gap: 14px;
-
-  /* clé pour éviter les bugs de flex + scroll */
   min-height: 0;
 }
 
 /* ----------------------------- Status server -------------------------------- */
 .status-server {
-  width: min(460px, 92vw);
-  height: 54px;
+  width: min(520px, 96vw);
+  height: 60px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 10px 14px;
 
   border-radius: 999px;
   border: 1px solid var(--stroke);
-
-  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+  background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.06));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 
@@ -116,40 +108,36 @@ body::before {
 .status-server:hover {
   transform: translateY(-1px);
   border-color: var(--stroke-strong);
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.07));
   box-shadow: var(--shadow1);
 }
 
 .server-status-icon {
-  width: 34px;
-  height: 34px;
-  margin-right: 10px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  margin-right: 12px;
+  border-radius: 12px;
   box-shadow: 0 10px 18px rgba(0,0,0,0.35);
 }
 
-.server-status-infos {
-  flex: 1;
-  text-align: left;
-  line-height: 1.05;
-}
+.server-status-infos { flex: 1; text-align: left; line-height: 1.05; }
 
 .server-status-name {
-  font-size: 0.98rem;
-  font-weight: 800;
+  font-size: 1.02rem;
+  font-weight: 900;
   letter-spacing: 0.2px;
 }
 
 .server-status-text {
-  font-size: 0.78rem;
+  font-size: 0.80rem;
   color: var(--accent);
   opacity: 0.95;
 }
 
 .status-player-count {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
 
   background: rgba(0,0,0,0.25);
@@ -160,13 +148,8 @@ body::before {
   justify-content: center;
 }
 
-.player-count {
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: var(--text);
-}
+.player-count { font-size: 0.95rem; font-weight: 900; color: var(--text); }
 
-/* pastille online */
 .status-player-count::after {
   content: "";
   position: absolute;
@@ -181,28 +164,30 @@ body::before {
   box-shadow: 0 0 0 3px rgba(0,0,0,0.25), 0 0 16px rgba(0,208,132,0.45);
 }
 
-/* ----------------------------- Zone centrale -------------------------------- */
+/* ----------------------------- Zone centrale (HOME) ------------------------ */
 .home-bottom {
   width: 100%;
-  flex: 1;        /* prend tout l'espace restant */
-  min-height: 0;  /* essentiel pour scroll */
-  display: flex;
+  flex: 1;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: 1fr 96px; /* news + barre socials */
   gap: 14px;
+  align-items: stretch;
 }
 
-/* ----------------------------- News panel ----------------------------------- */
+/* ----------------------------- News panel ---------------------------------- */
 .new-tab {
-  flex: 1;
   min-width: 0;
   height: 100%;
 
   position: relative;
-  border-radius: var(--radius);
+  border-radius: 22px;
   border: 1px solid var(--stroke);
 
-  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 
   box-shadow: var(--shadow1);
   padding: 18px;
@@ -212,33 +197,34 @@ body::before {
   overflow: hidden;
 }
 
-.new-tab::before {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 0;
+/* header du panel */
+.new-tab::before{
+  content:"";
+  position:absolute;
+  left: 14px; right: 14px; top: 14px;
   height: 2px;
+  border-radius: 999px;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   opacity: 0.75;
-  pointer-events: none;
+  pointer-events:none;
 }
 
 .titre-tab-new {
   text-align: center;
-  font-weight: 950;
-  letter-spacing: 3px;
+  font-weight: 1000;
+  letter-spacing: 6px;
   text-transform: uppercase;
-  font-size: 1.35rem;
-
-  margin-bottom: 14px;
+  font-size: 1.25rem;
+  margin: 18px 0 14px;
 
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
-
   text-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
+/* Liste news */
 .news-list {
   flex: 1;
   min-height: 0;
@@ -247,16 +233,12 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 12px;
-
   padding-right: 6px;
 }
 
-/* Scrollbars (Electron/Chromium) */
 .news-list::-webkit-scrollbar,
 .social-list::-webkit-scrollbar,
-.instances-List::-webkit-scrollbar {
-  width: 10px;
-}
+.instances-List::-webkit-scrollbar { width: 10px; }
 
 .news-list::-webkit-scrollbar-thumb,
 .social-list::-webkit-scrollbar-thumb,
@@ -268,19 +250,15 @@ body::before {
 
 .news-list::-webkit-scrollbar-thumb:hover,
 .social-list::-webkit-scrollbar-thumb:hover,
-.instances-List::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.20);
-}
+.instances-List::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
 
-/* Bloc de news */
+/* Carte news plus clean */
 .news-block {
   position: relative;
-
   background: rgba(0,0,0,0.22);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 14px 14px 14px 16px;
-
   transition: transform var(--t2), border-color var(--t), background var(--t), box-shadow var(--t);
 }
 
@@ -288,12 +266,12 @@ body::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 12px;
-  bottom: 12px;
+  top: 14px;
+  bottom: 14px;
   width: 3px;
   border-radius: 999px;
   background: linear-gradient(180deg, var(--accent2), var(--accent));
-  opacity: 0.65;
+  opacity: 0.75;
 }
 
 .news-block:hover {
@@ -311,8 +289,8 @@ body::before {
 }
 
 .header-text .title {
-  font-size: 1rem;
-  font-weight: 950;
+  font-size: 1.02rem;
+  font-weight: 1000;
   text-decoration: none;
   line-height: 1.15;
   letter-spacing: 0.2px;
@@ -328,40 +306,36 @@ body::before {
   white-space: nowrap;
 }
 
-/* Si tu affiches du texte dans la news */
 .news-block p,
 .news-block .content {
   margin-top: 10px;
   color: var(--text-dim);
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   line-height: 1.35;
 }
 
-/* ----------------------------- Social panel --------------------------------- */
+/* ----------------------------- Social panel -------------------------------- */
 .social-tab {
-  width: 88px;
   height: 100%;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .social-list {
-  width: 88px;
+  width: 96px;
   padding: 6px;
-
   display: flex;
   flex-direction: column;
   gap: 12px;
-
   overflow: auto;
 }
 
 .social-block {
-  width: 76px;
-  height: 76px;
+  width: 84px;
+  height: 84px;
 
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid var(--stroke);
 
   background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
@@ -386,18 +360,17 @@ body::before {
 }
 
 .icon-social {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   filter: brightness(0) invert(1);
   opacity: 0.95;
   pointer-events: none;
 }
 
-/* ----------------------------- Barre du bas --------------------------------- */
-/* IMPORTANT: pas de position absolute ici, sinon ça “bug” sur la hauteur */
+/* ----------------------------- Barre du bas -------------------------------- */
 .sidebar {
   width: 100%;
-  height: 64px;
+  height: 74px;
 
   display: flex;
   align-items: center;
@@ -414,76 +387,133 @@ body::before {
 }
 
 .player-head {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   background: url("../../images/default/setve.png") center/cover no-repeat;
   border: 1px solid rgba(255,255,255,0.16);
   box-shadow: 0 10px 20px rgba(0,0,0,0.35);
 }
 
-/* Bouton Jouer */
-.play-elements {
+/* ==============================
+   BOUTON JOUER (refait premium)
+   ============================== */
+
+.play-elements { display: flex; align-items: center; gap: 12px; }
+
+/* Le container “play-instance” devient un gros CTA */
+.play-instance{
+  width: min(460px, 68vw);
+  height: 56px;
+
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+
+  background:
+    radial-gradient(220px 120px at 25% 35%, rgba(0,194,255,0.18), transparent 60%),
+    radial-gradient(220px 120px at 70% 65%, rgba(0,208,132,0.18), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow: var(--shadow2);
+  transition: transform var(--t2), box-shadow var(--t), border-color var(--t), background var(--t);
+  overflow: hidden;
+  position: relative;
 }
 
-.play-instance{
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* garde l'arrow à droite */
-  gap: 10px;
+/* ligne accent interne (fine, propre) */
+.play-instance::before{
+  content:"";
+  position:absolute;
+  left: 14px; right: 14px; top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  opacity: .9;
 }
 
 .play-instance:hover {
   transform: translateY(-1px);
   border-color: rgba(0,208,132,0.22);
   box-shadow: var(--shadow1), var(--glow-accent);
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
 }
 
+/* Le bouton texte au centre */
 .play-btn{
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  text-align: center;
-  line-height: 1;            /* important pour le centrage visuel */
-  min-height: 34px;          /* donne une hauteur stable */
-  padding: 6px 0;            /* évite l'effet "texte trop haut/bas" */
-
+  height: 100%;
   border: none;
-  background: none;
+  background: transparent;
   cursor: pointer;
 
-  color: var(--text);
-  font-size: 1.15rem;
-  font-weight: 1000;
-  letter-spacing: 0.5px;
-}
-
-
-.play-btn:hover { color: var(--accent); }
-
-/* mini bouton instance */
-.instance-select{
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  color: rgba(255,255,255,0.92);
+  font-size: 1.20rem;
+  font-weight: 1000;
+  letter-spacing: 0.8px;
+  text-transform: none;
+
+  transition: color var(--t), transform var(--t2);
 }
 
-.instance-select:hover {
-  color: rgba(245,245,245,0.92);
-  border-color: rgba(0,208,132,0.22);
-  background: rgba(0,208,132,0.10);
+.play-instance:hover .play-btn{
+  color: rgba(255,255,255,0.98);
+}
+
+/* petit “shine” au hover */
+.play-instance::after{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.12), transparent 60%);
+  transform: translateX(-40%);
+  opacity: 0;
+  transition: transform .7s ease, opacity .3s ease;
+  pointer-events:none;
+}
+
+.play-instance:hover::after{
+  opacity: 1;
+  transform: translateX(40%);
+}
+
+/* mini bouton instance à droite */
+.instance-select{
+  width: 48px;
+  height: 44px;
+  margin-right: 8px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: transform var(--t2), border-color var(--t), background var(--t);
+}
+
+.instance-select:hover{
+  transform: translateY(-1px);
+  border-color: rgba(0,208,132,0.26);
+  background: rgba(0,208,132,0.12);
 }
 
 /* Progress / Connexion */
 .info-starting-game {
-  display: none; /* tu actives via JS */
+  display: none;
   text-align: center;
   color: var(--text-dim);
 }
@@ -505,8 +535,8 @@ body::before {
 
 /* Settings */
 .settings-btn {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 18px;
 
   border: 1px solid var(--stroke);
@@ -535,7 +565,7 @@ body::before {
 .instance-popup {
   position: fixed;
   inset: 0;
-  display: none; /* flex quand ouvert via JS */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -626,9 +656,9 @@ body::before {
 }
 
 /* ----------------------------- Responsive ----------------------------------- */
-@media (max-width: 860px) {
-  .home-bottom { flex-direction: column; }
-  .social-tab { width: 100%; height: auto; }
+@media (max-width: 980px) {
+  .home-bottom { grid-template-columns: 1fr; }
+  .social-tab { height: auto; }
   .social-list {
     flex-direction: row;
     width: 100%;
@@ -636,10 +666,11 @@ body::before {
     overflow-y: hidden;
     justify-content: center;
   }
-  .social-block { width: 70px; height: 70px; }
+  .social-block { width: 74px; height: 74px; }
+  .play-instance{ width: min(520px, 92vw); }
 }
 
 @media (max-width: 520px) {
   .sidebar { height: auto; padding: 6px 0; flex-wrap: wrap; }
-  .play-instance { width: 100%; justify-content: space-between; }
+  .play-instance { width: 100%; }
 }
