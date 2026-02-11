@@ -63,7 +63,7 @@ img{ -webkit-user-drag:none; user-select:none; }
   width:100%;
   display:grid;
   place-items:center;
-  padding: 22px;
+  padding: 14px;
 }
 
 /* ========================================================================== */

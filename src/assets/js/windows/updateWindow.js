@@ -22,43 +22,55 @@ function destroyWindow() {
   updateWindow = undefined;
 }
 
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
 /**
- * Ajuste la fenêtre à la taille du contenu HTML
+ * Redimensionne la fenêtre selon le contenu HTML (hauteur/largeur)
+ * - safe: ne casse rien si la window n'existe pas
  */
-function fitToContent(win, { minW = 420, minH = 520, maxW = 820, maxH = 900 } = {}) {
-  if (!win || win.isDestroyed()) return;
+async function fitToContent(extraW = 40, extraH = 60) {
+  if (!updateWindow || updateWindow.isDestroyed()) return;
 
-  const wc = win.webContents;
+  try {
+    const wc = updateWindow.webContents;
 
-  // On mesure la taille réelle du rendu (scrollWidth/scrollHeight)
-  wc.executeJavaScript(
-    `(() => {
-      const doc = document.documentElement;
-      const body = document.body;
-      const w = Math.max(doc.scrollWidth, body.scrollWidth, doc.clientWidth);
-      const h = Math.max(doc.scrollHeight, body.scrollHeight, doc.clientHeight);
-      return { w, h };
-    })()`,
-    true
-  )
-    .then(({ w, h }) => {
-      if (!w || !h) return;
+    // On lit la taille réelle du contenu
+    const { w, h } = await wc.executeJavaScript(
+      `(() => {
+        const doc = document.documentElement;
+        const body = document.body;
 
-      // + marges pour bordures/ombres
-      const targetW = clamp(Math.ceil(w) + 40, minW, maxW);
-      const targetH = clamp(Math.ceil(h) + 40, minH, maxH);
+        // largeur/hauteur "réelles" du contenu
+        const contentW = Math.max(
+          doc.scrollWidth, body.scrollWidth,
+          doc.offsetWidth, body.offsetWidth,
+          doc.clientWidth
+        );
 
-      const [curW, curH] = win.getSize();
-      if (Math.abs(curW - targetW) < 2 && Math.abs(curH - targetH) < 2) return;
+        const contentH = Math.max(
+          doc.scrollHeight, body.scrollHeight,
+          doc.offsetHeight, body.offsetHeight,
+          doc.clientHeight
+        );
 
-      win.setSize(targetW, targetH, true);
-      win.center();
-    })
-    .catch(() => {});
+        return { w: contentW, h: contentH };
+      })()`,
+      true
+    );
+
+    // Limites (évite que ça devienne trop petit ou trop grand)
+    const minW = 420;
+    const minH = 340;
+    const maxW = 760;
+    const maxH = 720;
+
+    const targetW = Math.max(minW, Math.min(maxW, Math.ceil(w + extraW)));
+    const targetH = Math.max(minH, Math.min(maxH, Math.ceil(h + extraH)));
+
+    // setContentSize gère mieux que setSize pour une window sans frame
+    updateWindow.setContentSize(targetW, targetH, true);
+    updateWindow.center();
+  } catch (e) {
+    // si executeJavaScript échoue, on ne casse rien
+  }
 }
 
 function createWindow() {
@@ -66,16 +78,13 @@ function createWindow() {
 
   updateWindow = new BrowserWindow({
     title: "Mise à jour",
-    width: 520,
-    height: 620,
+    width: 480,          // ✅ base plus cohérente
+    height: 380,         // ✅ base plus cohérente
     resizable: false,
-    maximizable: false,
-    minimizable: false,
-    fullscreenable: false,
     icon: `./src/assets/images/icon.${os.platform() === "win32" ? "ico" : "png"}`,
     frame: false,
     show: false,
-    backgroundColor: "#0b0f14",
+    backgroundColor: "#00000000",
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
@@ -87,39 +96,24 @@ function createWindow() {
 
   updateWindow.loadFile(path.join(`${app.getAppPath()}/src/index.html`));
 
-  updateWindow.once("ready-to-show", () => {
+  updateWindow.once("ready-to-show", async () => {
     if (!updateWindow) return;
-
-    // Devtools si besoin
     if (dev) updateWindow.webContents.openDevTools({ mode: "detach" });
 
+    // ✅ auto-fit au démarrage
+    await fitToContent();
     updateWindow.show();
-
-    // Premier auto-fit après rendu
-    setTimeout(() => fitToContent(updateWindow), 120);
-    setTimeout(() => fitToContent(updateWindow), 400);
   });
 
-  // Auto-fit après chaque fin de chargement
+  // ✅ Re-fit après chargement complet
   updateWindow.webContents.on("did-finish-load", () => {
-    setTimeout(() => fitToContent(updateWindow), 80);
+    fitToContent();
   });
 
-  // Auto-fit quand la page bouge (anim/transition)
-  updateWindow.webContents.on("dom-ready", () => {
-    setTimeout(() => fitToContent(updateWindow), 80);
-  });
+  // ✅ IPC appelé depuis ton index.js (requestFit())
+  ipcMain.removeAllListeners("update-window-fit");
+  ipcMain.on("update-window-fit", () => fitToContent());
 }
-
-/**
- * IPC: le renderer demande un refit (quand message/progress change)
- */
-ipcMain.on("update-window-fit", () => {
-  const win = getWindow();
-  if (!win) return;
-  // petit debounce naturel
-  setTimeout(() => fitToContent(win), 40);
-});
 
 module.exports = {
   getWindow,
