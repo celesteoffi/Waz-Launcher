@@ -10,34 +10,29 @@
 
   <body>
     <div id="splash" style="display:none">
-      <div class="card">
-        <div class="topline"></div>
+      <div class="topline"></div>
 
-        <div class="content">
-          <div class="logo-wrap">
-            <img class="splash-logo" src="assets/images/icon.png" alt="UniverCraft" />
-          </div>
-
-          <div class="splash-title">UNIVERCRAFT</div>
-
-          <!-- Rempli par ton JS -->
-          <div class="splash-message"></div>
-          <div class="splash-author"><span class="author"></span></div>
-
-          <!-- Status / updater -->
-          <div class="message">Recherche de mise à jour…</div>
-
-          <!-- Progress -->
-          <div class="progress-wrap">
-            <div class="progress-top">
-              <span class="hint">Téléchargement</span>
-              <span class="percent" id="progress-percent">0%</span>
-            </div>
-            <progress value="0" max="0" class="progress"></progress>
-          </div>
-
-          <!-- Le bouton est injecté par ton JS via .download-update -->
+      <div class="content">
+        <div class="logo-wrap pulse">
+          <img class="splash-logo" src="assets/images/icon.png" alt="UniverCraft" />
         </div>
+
+        <div class="splash-title">UNIVERCRAFT</div>
+
+        <div class="splash-message"></div>
+        <div class="splash-author"><span class="author"></span></div>
+
+        <div class="message">Recherche de mise à jour…</div>
+
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span class="hint">Téléchargement</span>
+            <span class="percent" id="progress-percent">0%</span>
+          </div>
+          <progress value="0" max="0" class="progress"></progress>
+        </div>
+
+        <!-- bouton injecté par ton JS: <div class="download-update" ...> -->
       </div>
     </div>
 
