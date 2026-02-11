@@ -1,33 +1,16 @@
 "use strict";
 
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+/**
+ * @author Luuxis
+ * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
+ */
+
+const { app, BrowserWindow, Menu } = require("electron");
 const path = require("path");
 const os = require("os");
 
 let dev = process.env.DEV_TOOL === "open";
-let updateWindow;
-
-/* =========================
-   Auto fit contenu (IMPORTANT)
-   ========================= */
-async function fitWindow() {
-  if (!updateWindow) return;
-
-  try {
-    const size = await updateWindow.webContents.executeJavaScript(`
-      ({
-        w: document.documentElement.scrollWidth,
-        h: document.documentElement.scrollHeight
-      })
-    `);
-
-    const width  = Math.max(460, size.w + 40);
-    const height = Math.max(320, size.h + 40);
-
-    updateWindow.setContentSize(width, height);
-    updateWindow.center();
-  } catch {}
-}
+let updateWindow = undefined;
 
 function getWindow() {
   return updateWindow;
@@ -45,41 +28,35 @@ function createWindow() {
   updateWindow = new BrowserWindow({
     title: "Mise à jour",
 
-    /* ✅ Taille de base très petite */
-    width: 460,
-    height: 340,
+    // ✅ Taille FIXE (pas d'auto-resize)
+    width: 400,
+    height: 500,
 
-    frame: false,
     resizable: false,
+    frame: false,
     show: false,
 
-    backgroundColor: "#00000000",
+    // optionnel (si tu veux éviter un fond blanc pendant le blur)
+    // backgroundColor: "#00000000",
 
     icon: `./src/assets/images/icon.${os.platform() === "win32" ? "ico" : "png"}`,
 
     webPreferences: {
-      nodeIntegration: true,
       contextIsolation: false,
+      nodeIntegration: true,
     },
   });
 
   Menu.setApplicationMenu(null);
+  updateWindow.setMenuBarVisibility(false);
 
-  updateWindow.loadFile(
-    path.join(`${app.getAppPath()}/src/index.html`)
-  );
+  updateWindow.loadFile(path.join(`${app.getAppPath()}/src/index.html`));
 
-  /* ===== AUTO RESIZE ===== */
-  updateWindow.once("ready-to-show", async () => {
-    await fitWindow();
+  updateWindow.once("ready-to-show", () => {
+    if (!updateWindow) return;
     if (dev) updateWindow.webContents.openDevTools({ mode: "detach" });
     updateWindow.show();
   });
-
-  updateWindow.webContents.on("did-finish-load", fitWindow);
-
-  ipcMain.removeAllListeners("update-window-fit");
-  ipcMain.on("update-window-fit", fitWindow);
 }
 
 module.exports = {

@@ -2,7 +2,7 @@
 @import "theme.css";
 
 /* ========================================================================== */
-/* Splash / Loading - UniverCraft (responsive + centré + clean)                */
+/* Splash / Loading - UniverCraft (simple, clean, sans cadre interne)          */
 /* ========================================================================== */
 
 :root{
@@ -12,24 +12,19 @@
   --text: rgba(245,245,245,.94);
   --muted: rgba(245,245,245,.68);
 
-  --card: rgba(255,255,255,.08);
-  --card2: rgba(255,255,255,.14);
-  --stroke: rgba(255,255,255,.18);
+  --card: rgba(255,255,255,.12);
+  --stroke: rgba(255,255,255,.16);
 
   --shadow: 0 22px 56px rgba(0,0,0,.55);
-  --shadow2: 0 12px 28px rgba(0,0,0,.45);
+  --shadow2: 0 12px 28px rgba(0,0,0,.40);
 
-  --radius: 24px;
+  --radius: 22px;
   --t: 220ms ease;
   --t2: 520ms cubic-bezier(.2,.8,.2,1);
 }
 
 *{ margin:0; padding:0; box-sizing:border-box; }
-
-html, body{
-  width:100%;
-  height:100%;
-}
+html, body{ width:100%; height:100%; }
 
 body{
   font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -40,7 +35,6 @@ body{
   position:relative;
 }
 
-/* Fond premium */
 body::before{
   content:"";
   position:fixed;
@@ -48,59 +42,46 @@ body::before{
   z-index:0;
   pointer-events:none;
   background:
-    radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.15), transparent 60%),
-    radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.14), transparent 62%),
-    radial-gradient(1200px 900px at 50% 80%, rgba(0,0,0,0.55), transparent 55%),
-    linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.78));
+    radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.14), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.12), transparent 62%),
+    radial-gradient(1200px 900px at 50% 82%, rgba(0,0,0,0.55), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0.78));
 }
 
 img{ -webkit-user-drag:none; user-select:none; }
 
 /* ========================================================================== */
-/* Root wrapper : CENTRAGE FIX                                                 */
+/* Wrapper                                                                      */
 /* ========================================================================== */
 
 #splash{
   position:relative;
   z-index:1;
-
   width:100%;
   height:100%;
-
-  /* ✅ le vrai fix : centre vertical + horizontal */
   display:flex;
   align-items:center;
   justify-content:center;
-
   padding: 18px;
 }
 
 /* ========================================================================== */
-/* Card : s’adapte à la fenêtre                                                */
+/* Card (UNE SEULE carte, pas de cadre interne)                                */
 /* ========================================================================== */
 
 .splash-card{
-  width: min(520px, 94vw);
-
-  /* ✅ évite le vide : taille mini + limite hauteur */
-  min-height: 320px;
-  max-height: calc(100vh - 36px);
-
+  width: min(560px, 94vw);
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
-
-  background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.06));
+  background: rgba(255,255,255,.10);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-
   box-shadow: var(--shadow);
   overflow:hidden;
   position:relative;
-
-  /* ✅ important : centre le contenu si la carte grandit */
-  display:flex;
 }
 
+/* Barre accent (fine) */
 .splash-card::before{
   content:"";
   position:absolute;
@@ -110,40 +91,19 @@ img{ -webkit-user-drag:none; user-select:none; }
   opacity:.9;
 }
 
+/* ✅ IMPORTANT : on SUPPRIME le glow interne qui donnait l'impression d'un cadre */
 .splash-card::after{
-  content:"";
-  position:absolute;
-  inset:-120px;
-  background:
-    radial-gradient(320px 220px at 30% 25%, rgba(0,194,255,0.20), transparent 60%),
-    radial-gradient(320px 220px at 70% 65%, rgba(0,208,132,0.16), transparent 60%);
-  filter: blur(18px);
-  opacity:.75;
-  pointer-events:none;
+  content:none;
 }
 
-/* ========================================================================== */
-/* Inner : contenu centré et responsive                                        */
-/* ========================================================================== */
-
+/* Contenu */
 .splash-inner{
-  position:relative;
-  z-index:1;
-
-  width:100%;
-  height:100%;
-
-  /* ✅ centre vertical interne (plus de “bloc en haut”) */
+  padding: 22px 24px 20px;
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:center;
-
-  /* ✅ si petite fenêtre : on réduit proprement */
-  padding: clamp(18px, 3vh, 26px) clamp(18px, 3vw, 26px);
-  gap: 10px;
-
   text-align:center;
+  gap: 12px;
 }
 
 /* ========================================================================== */
@@ -151,50 +111,40 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-logo-wrap{
-  width: clamp(88px, 12vh, 104px);
-  height: clamp(88px, 12vh, 104px);
+  width: 104px;
+  height: 104px;
+  border-radius: 22px;
 
-  border-radius: 26px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.20);
+  /* ✅ plus de bordure interne chelou */
+  border: 0;
+  background: rgba(0,0,0,0.18);
 
   display:grid;
   place-items:center;
-
   box-shadow: var(--shadow2);
-  position:relative;
-  overflow:hidden;
 }
 
 .splash-logo-wrap::before{
-  content:"";
-  position:absolute;
-  inset:-40px;
-  background: radial-gradient(circle at 40% 30%, rgba(0,194,255,0.22), transparent 55%);
-  filter: blur(12px);
-  opacity:.9;
+  content:none;
 }
 
 .splash-logo{
-  width: clamp(66px, 9vh, 78px);
-  height: clamp(66px, 9vh, 78px);
-  border-radius: 20px;
-  z-index:1;
-  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+  width: 78px;
+  height: 78px;
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.35);
 }
 
 .splash-title{
   font-weight: 900;
   letter-spacing: 3px;
   text-transform: uppercase;
-  font-size: clamp(1.0rem, 2.2vh, 1.15rem);
-
+  font-size: 1.15rem;
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   -webkit-background-clip:text;
   background-clip:text;
-
-  text-shadow: 0 10px 24px rgba(0,0,0,.35);
+  text-shadow: 0 10px 24px rgba(0,0,0,.30);
 }
 
 /* ========================================================================== */
@@ -202,35 +152,33 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-message{
-  font-size: clamp(0.98rem, 2.2vh, 1.05rem);
+  font-size: 1.03rem;
   font-weight: 900;
   line-height: 1.25;
-  min-height: 1.4em;
   color: rgba(255,255,255,0.95);
-  max-width: 92%;
+  min-height: 1.4em;
 }
 
 .splash-author{
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.60);
+  color: rgba(255,255,255,0.62);
   min-height: 1.2em;
   margin-top: -4px;
 }
 
 .splash-author .author{
   font-weight: 900;
-  color: rgba(255,255,255,0.78);
+  color: rgba(255,255,255,0.80);
 }
 
 /* Status (pill) */
 .message{
-  margin-top: 12px;
-
+  margin-top: 10px;
   padding: 10px 14px;
   border-radius: 14px;
 
-  background: rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.10);
 
   font-weight: 850;
   font-size: 0.98rem;
@@ -247,7 +195,7 @@ img{ -webkit-user-drag:none; user-select:none; }
 }
 
 /* ========================================================================== */
-/* Progress (stable show/hide)                                                 */
+/* Progress (show/hide propre)                                                 */
 /* ========================================================================== */
 
 .progress-wrap{
@@ -261,7 +209,7 @@ img{ -webkit-user-drag:none; user-select:none; }
   max-height: 0;
   overflow:hidden;
   transform: translateY(-4px);
-  transition: opacity .4s ease, max-height .4s ease, transform .4s ease;
+  transition: opacity .35s ease, max-height .35s ease, transform .35s ease;
 }
 
 .progress-wrap.show{
@@ -293,7 +241,7 @@ progress.progress{
 
 progress.progress::-webkit-progress-bar{
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 999px;
 }
 
@@ -310,8 +258,8 @@ progress.progress::-webkit-progress-value{
   width: 100%;
   height: 44px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
   color: rgba(245,245,245,0.92);
   font-weight: 900;
   letter-spacing: 0.4px;
@@ -324,7 +272,7 @@ progress.progress::-webkit-progress-value{
 
 .download-update:hover{
   transform: translateY(-1px);
-  border-color: rgba(0,208,132,0.28);
+  border-color: rgba(0,208,132,0.26);
   background: rgba(0,208,132,0.10);
 }
 
@@ -347,10 +295,10 @@ progress.progress::-webkit-progress-value{
 
 @keyframes pulseGlow{
   0%,100% { box-shadow: var(--shadow2); }
-  50%     { box-shadow: var(--shadow2), 0 0 22px rgba(0,194,255,0.18); }
+  50%     { box-shadow: var(--shadow2), 0 0 18px rgba(0,194,255,0.16); }
 }
 
-/* Compat anciennes classes (si ton JS les utilise) */
+/* Compat anciennes classes */
 .splash.opacity,
 .splash-message.opacity,
 .splash-author.opacity,
