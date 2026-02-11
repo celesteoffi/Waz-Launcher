@@ -45,7 +45,6 @@ function formatPercent(value, max) {
 /**
  * RPC SAFE (renderer -> main)
  * - Ne casse rien si le main n'a pas la feature
- * - Ne dépend pas de dotenv / discord-rpc ici
  */
 function rpcSet(presence) {
   try {
@@ -64,8 +63,12 @@ class Splash {
     this.splashAuthor = document.querySelector(".splash-author");
     this.authorSpan = document.querySelector(".splash-author .author");
     this.message = document.querySelector(".message");
-    this.progress = document.querySelector("progress.progress") || document.querySelector(".progress");
+
+    // ✅ IMPORTANT: on gère le wrapper ET la barre
+    this.progressWrap = document.querySelector(".progress-wrap");
+    this.progressBar = document.querySelector("progress.progress") || document.querySelector(".progress");
     this.percentEl = document.getElementById("progress-percent");
+
     this.downloadBtn = null;
 
     this._interval = null;
@@ -152,10 +155,12 @@ class Splash {
     return this.splashes[Math.floor(Math.random() * this.splashes.length)];
   }
 
+  /**
+   * ✅ FIX: cache l’auteur si vide (plus de trou)
+   */
   setSplash({ message, author }) {
     if (this.splashMessage) this.splashMessage.textContent = message || "";
 
-    // auteur => si vide, on cache la ligne (évite un trou)
     if (this.splashAuthor) {
       if (author) {
         if (this.authorSpan) this.authorSpan.textContent = `@${author}`;
@@ -165,7 +170,6 @@ class Splash {
       }
     }
 
-    // RPC: statut léger
     rpcSet({
       details: "UniverCraft Launcher",
       state: message || "Initialisation…",
@@ -193,9 +197,7 @@ class Splash {
     this.bindIpcOnce();
 
     try {
-      // Lancer check auto-updater côté main process
       await ipcRenderer.invoke("update-app");
-      // => Suite via events: updateAvailable / update-not-available / error
     } catch (err) {
       console.error(err);
 
@@ -214,7 +216,6 @@ class Splash {
     if (this._listenersBound) return;
     this._listenersBound = true;
 
-    // Update disponible
     ipcRenderer.on("updateAvailable", async () => {
       if (this._closing) return;
 
@@ -231,7 +232,6 @@ class Splash {
       this.setStatus("Mise à jour disponible !");
       this.hideDownloadButton();
 
-      // Windows: download + install auto
       if (os.platform() === "win32") {
         this.showProgress();
         this.setProgress(0, 1);
@@ -239,11 +239,9 @@ class Splash {
         return;
       }
 
-      // Linux/mac: propose download externe (GitHub assets)
       await this.downloadUpdateExternal();
     });
 
-    // Progress download (Windows)
     ipcRenderer.on("download-progress", (event, progress) => {
       if (this._closing) return;
 
@@ -282,7 +280,6 @@ class Splash {
       }
     });
 
-    // Pas d’update
     ipcRenderer.on("update-not-available", async () => {
       if (this._closing) return;
 
@@ -299,7 +296,6 @@ class Splash {
       await this.maintenanceCheck();
     });
 
-    // Erreur auto-updater
     ipcRenderer.on("error", (event, err) => {
       if (this._closing) return;
       const msg = err?.message || String(err || "Erreur inconnue");
@@ -425,6 +421,7 @@ class Splash {
     const btn = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!btn) return;
 
+    // évite multi-bind
     btn.replaceWith(btn.cloneNode(true));
     const fresh = document.getElementById("download-update-btn") || document.querySelector(".download-update");
     if (!fresh) return;
@@ -503,23 +500,22 @@ class Splash {
     this.message.innerHTML = html;
   }
 
+  // ✅ Compatible avec TON CSS clean: .progress-wrap.show
   showProgress() {
-    const wrap = document.getElementById("progress-wrap");
-    if (wrap) wrap.classList.add("show");
+    if (this.progressWrap) this.progressWrap.classList.add("show");
     if (this.percentEl) this.percentEl.textContent = this.percentEl.textContent || "0%";
   }
 
   hideProgress() {
-    const wrap = document.getElementById("progress-wrap");
-    if (wrap) wrap.classList.remove("show");
+    if (this.progressWrap) this.progressWrap.classList.remove("show");
     this.setProgress(0, 0);
     this.updatePercent(0, 0);
   }
 
   setProgress(value, max) {
-    if (!this.progress) return;
-    this.progress.value = value || 0;
-    this.progress.max = max || 0;
+    if (!this.progressBar) return;
+    this.progressBar.value = value || 0;
+    this.progressBar.max = max || 0;
   }
 
   updatePercent(value, max) {

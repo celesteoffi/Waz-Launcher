@@ -13,13 +13,13 @@
   --muted: rgba(245,245,245,.68);
 
   --card: rgba(255,255,255,.08);
-  --card2: rgba(255,255,255,.12);
-  --stroke: rgba(255,255,255,.14);
+  --card2: rgba(255,255,255,.14);
+  --stroke: rgba(255,255,255,.18);
 
   --shadow: 0 22px 56px rgba(0,0,0,.55);
   --shadow2: 0 12px 28px rgba(0,0,0,.45);
 
-  --radius: 22px;
+  --radius: 24px;
   --t: 220ms ease;
   --t2: 520ms cubic-bezier(.2,.8,.2,1);
 }
@@ -36,6 +36,7 @@ body{
   position:relative;
 }
 
+/* Fond premium */
 body::before{
   content:"";
   position:fixed;
@@ -62,12 +63,15 @@ img{ -webkit-user-drag:none; user-select:none; }
   width:100%;
   display:grid;
   place-items:center;
-  padding: 26px;
+  padding: 22px;
 }
 
-/* Carte */
+/* ========================================================================== */
+/* Card                                                                        */
+/* ========================================================================== */
+
 .splash-card{
-  width: min(540px, 92vw);
+  width: min(520px, 94vw);
   border-radius: var(--radius);
   border: 1px solid var(--stroke);
   background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.06));
@@ -102,10 +106,10 @@ img{ -webkit-user-drag:none; user-select:none; }
 .splash-inner{
   position:relative;
   z-index:1;
-  padding: 26px 26px 22px;
+  padding: 22px 24px 20px;
   display:flex;
   flex-direction:column;
-  gap: 12px;
+  gap: 10px;
   align-items:center;
   text-align:center;
 }
@@ -115,8 +119,8 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-logo-wrap{
-  width: 118px;
-  height: 118px;
+  width: 104px;
+  height: 104px;
   border-radius: 26px;
   border: 1px solid rgba(255,255,255,0.16);
   background: rgba(0,0,0,0.20);
@@ -137,8 +141,8 @@ img{ -webkit-user-drag:none; user-select:none; }
 }
 
 .splash-logo{
-  width: 86px;
-  height: 86px;
+  width: 78px;
+  height: 78px;
   border-radius: 20px;
   z-index:1;
   box-shadow: 0 12px 28px rgba(0,0,0,.45);
@@ -146,9 +150,9 @@ img{ -webkit-user-drag:none; user-select:none; }
 
 .splash-title{
   font-weight: 900;
-  letter-spacing: 4px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   color: transparent;
   background: linear-gradient(90deg, var(--accent2), var(--accent));
   -webkit-background-clip:text;
@@ -161,53 +165,65 @@ img{ -webkit-user-drag:none; user-select:none; }
 /* ========================================================================== */
 
 .splash-message{
-  font-size: 1.02rem;
-  font-weight: 800;
+  font-size: 1.03rem;
+  font-weight: 900;
   line-height: 1.25;
   min-height: 1.4em;
+  color: rgba(255,255,255,0.95);
 }
 
 .splash-author{
-  font-size: 0.80rem;
-  color: var(--muted);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.60);
   min-height: 1.2em;
+  margin-top: -4px;
 }
 
 .splash-author .author{
   font-weight: 900;
-  color: rgba(245,245,245,0.86);
+  color: rgba(255,255,255,0.78);
 }
 
+/* Status (pill) */
 .message{
-  margin-top: 6px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-weight: 850;
   font-size: 0.98rem;
-  font-weight: 800;
-  color: rgba(245,245,245,0.90);
-  min-height: 1.4em;
+  width: 100%;
+  min-height: 44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color: rgba(245,245,245,0.92);
 }
 
 /* ========================================================================== */
-/* Progress                                                                    */
+/* Progress (stable show/hide)                                                 */
 /* ========================================================================== */
 
 .progress-wrap{
   width:100%;
-  margin-top: 6px;
+  margin-top: 10px;
   display:flex;
   flex-direction:column;
   gap: 10px;
 
-  /* IMPORTANT: évite le “bug visuel” quand JS hide/show */
+  /* caché par défaut */
   opacity: 0;
   max-height: 0;
   overflow:hidden;
   transform: translateY(-4px);
-  transition: opacity var(--t2), max-height var(--t2), transform var(--t2);
+  transition: opacity .4s ease, max-height .4s ease, transform .4s ease;
 }
 
 .progress-wrap.show{
   opacity: 1;
-  max-height: 120px;
+  max-height: 140px;
   transform: translateY(0);
 }
 
@@ -244,7 +260,7 @@ progress.progress::-webkit-progress-value{
 }
 
 /* ========================================================================== */
-/* Button                                                                       */
+/* Button                                                                      */
 /* ========================================================================== */
 
 .download-update{
@@ -291,7 +307,7 @@ progress.progress::-webkit-progress-value{
   50%     { box-shadow: var(--shadow2), 0 0 22px rgba(0,194,255,0.18); }
 }
 
-/* Compat anciennes classes (si ton JS les utilise encore) */
+/* Compat anciennes classes (si ton JS les utilise) */
 .splash.opacity,
 .splash-message.opacity,
 .splash-author.opacity,
@@ -301,83 +317,4 @@ progress.progress::-webkit-progress-value{
 
 .splash.translate{
   transform: translate(-50%) translateY(-10px);
-}
-
-/* ===============================
-   Fix visuel UniverCraft (clean)
-   =============================== */
-
-/* Carte plus compacte */
-.splash-card{
-  width: min(520px, 94vw);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
-  border: 1px solid rgba(255,255,255,0.18);
-}
-
-/* Moins d’espace vide */
-.splash-inner{
-  padding: 22px 24px 20px;
-  gap: 10px;
-}
-
-/* Logo un peu plus petit (meilleur équilibre) */
-.splash-logo-wrap{
-  width: 104px;
-  height: 104px;
-}
-.splash-logo{
-  width: 78px;
-  height: 78px;
-}
-
-/* Titre plus lisible */
-.splash-title{
-  letter-spacing: 3px;
-  font-size: 1.15rem;
-}
-
-/* Message principal plus fort */
-.splash-message{
-  font-size: 1.03rem;
-  font-weight: 900;
-  color: rgba(255,255,255,0.95);
-}
-
-/* Auteur discret */
-.splash-author{
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.60);
-  margin-top: -4px;
-}
-
-/* Status (update / download) style "pill" propre */
-.message{
-  margin-top: 10px;
-  padding: 10px 14px;
-
-  border-radius: 14px;
-  background: rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.12);
-
-  font-weight: 850;
-  font-size: 0.98rem;
-  width: 100%;
-}
-
-/* Animation douce pour la progress */
-.progress-wrap{
-  margin-top: 10px;
-
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transform: translateY(-4px);
-  transition: opacity .4s ease, max-height .4s ease, transform .4s ease;
-}
-
-.progress-wrap.show{
-  opacity: 1;
-  max-height: 120px;
-  transform: translateY(0);
 }
