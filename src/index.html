@@ -1,17 +1,40 @@
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
-        <link rel="stylesheet" href="assets/css/index.css">
-    </head>
-    <body>
-        <div id="splash" style="display:none">
-            <img class="splash" src="assets/images/icon/icon.png" />
-            <p class="splash-message"></p>
-            <p class="splash-author"><span class="author"></span></p>
-            <p class="message">Recherche de mise à jour...</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self';" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="assets/css/index.css" />
+  </head>
+
+  <body>
+    <div id="splash" style="display:none">
+      <div class="splash-card fade-in">
+        <div class="splash-inner">
+          <div class="splash-logo-wrap pulse">
+            <img class="splash-logo" src="assets/images/icon.png" alt="UniverCraft" />
+          </div>
+
+          <div class="splash-title">UNIVERCRAFT</div>
+
+          <p class="splash-message"></p>
+          <p class="splash-author"><span class="author"></span></p>
+
+          <p class="message">Recherche de mise à jour...</p>
+
+          <!-- Progress -->
+          <div class="progress-wrap" id="progress-wrap">
+            <div class="progress-top">
+              <span class="hint">Téléchargement</span>
+              <span class="percent" id="progress-percent">0%</span>
+            </div>
             <progress value="0" max="0" class="progress"></progress>
+          </div>
+
+          <!-- Le bouton update est injecté par JS si besoin -->
         </div>
-        <script src="assets/js/index.js" type="module"></script>
-    </body>
+      </div>
+    </div>
+
+    <script src="assets/js/index.js" type="module"></script>
+  </body>
 </html>

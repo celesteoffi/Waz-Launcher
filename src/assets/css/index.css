@@ -1,129 +1,320 @@
 @import "font.css";
-@import 'theme.css';
+@import "theme.css";
 
-body {
-    background-color: var(--background);
-    font-family: "Poppins";
-    letter-spacing: 0px;
+/* ========================================================================== */
+/* Splash / Loading - UniverCraft (clean + stable)                             */
+/* ========================================================================== */
+
+:root{
+  --accent: #00d084;
+  --accent2:#00c2ff;
+
+  --text: rgba(245,245,245,.94);
+  --muted: rgba(245,245,245,.68);
+
+  --card: rgba(255,255,255,.08);
+  --card2: rgba(255,255,255,.14);
+  --stroke: rgba(255,255,255,.18);
+
+  --shadow: 0 22px 56px rgba(0,0,0,.55);
+  --shadow2: 0 12px 28px rgba(0,0,0,.45);
+
+  --radius: 24px;
+  --t: 220ms ease;
+  --t2: 520ms cubic-bezier(.2,.8,.2,1);
 }
 
-img {
-    -webkit-user-drag: none;
-    user-select: none;
+*{ margin:0; padding:0; box-sizing:border-box; }
+html, body{ height:100%; }
+
+body{
+  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  overflow:hidden;
+  -webkit-font-smoothing: antialiased;
+  position:relative;
 }
 
-.splash {
-    position: absolute;
-    top: 180px;
-    left: 50%;
-    transform: translate(-50%);
-    width: 140px;
-    height: 140px;
-    transition: opacity .3s, top 1.5s;
-    opacity: 0;
+/* Fond premium */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 50% 18%, rgba(0,194,255,0.15), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0,208,132,0.14), transparent 62%),
+    radial-gradient(1200px 900px at 50% 80%, rgba(0,0,0,0.55), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.78));
 }
 
-.splash.opacity {
-    opacity: 1;
+img{ -webkit-user-drag:none; user-select:none; }
+
+/* ========================================================================== */
+/* Root wrapper                                                                */
+/* ========================================================================== */
+
+#splash{
+  position:relative;
+  z-index:1;
+  height:100%;
+  width:100%;
+  display:grid;
+  place-items:center;
+  padding: 14px;
 }
 
-.splash.translate {
-    top: 129px;
+/* ========================================================================== */
+/* Card                                                                        */
+/* ========================================================================== */
+
+.splash-card{
+  width: min(520px, 94vw);
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, var(--card2), rgba(255,255,255,0.06));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  position:relative;
 }
 
-.splash-message {
-    position: absolute;
-    top: 289px;
-    left: 0px;
-    width: 400px;
-    font: normal normal bold 19px/29px Poppins;
-    text-align: center;
-    letter-spacing: 0px;
-    transition: opacity 1.5s;
-    color: var(--color);
-    opacity: 0;
+.splash-card::before{
+  content:"";
+  position:absolute;
+  left:0; right:0; top:0;
+  height:2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  opacity:.9;
 }
 
-.splash-message.opacity {
-    opacity: 1;
+.splash-card::after{
+  content:"";
+  position:absolute;
+  inset:-120px;
+  background:
+    radial-gradient(320px 220px at 30% 25%, rgba(0,194,255,0.20), transparent 60%),
+    radial-gradient(320px 220px at 70% 65%, rgba(0,208,132,0.16), transparent 60%);
+  filter: blur(18px);
+  opacity:.75;
+  pointer-events:none;
 }
 
-.splash-author {
-    position: absolute;
-    top: 326px;
-    left: 0px;
-    width: 400px;
-    text-align: center;
-    transition: opacity 1.5s;
-    font: normal normal normal 9px/13px Poppins;
-    color: var(--color);
-    opacity: 0;
+.splash-inner{
+  position:relative;
+  z-index:1;
+  padding: 22px 24px 20px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  align-items:center;
+  text-align:center;
 }
 
-.splash-author .author {
-    font: normal normal bold 9px/13px Poppins;
+/* ========================================================================== */
+/* Logo + title                                                                */
+/* ========================================================================== */
+
+.splash-logo-wrap{
+  width: 104px;
+  height: 104px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.20);
+  display:grid;
+  place-items:center;
+  box-shadow: var(--shadow2);
+  position:relative;
+  overflow:hidden;
 }
 
-.splash-author.opacity {
-    opacity: 1;
+.splash-logo-wrap::before{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background: radial-gradient(circle at 40% 30%, rgba(0,194,255,0.22), transparent 55%);
+  filter: blur(12px);
+  opacity:.9;
 }
 
-.message {
-    position: absolute;
-    top: 347px;
-    left: 0px;
-    width: 400px;
-    text-align: center;
-    transition: opacity 1.5s;
-    font: normal normal bold 18px/27px Poppins;
-    color: var(--color);
-    opacity: 0;
+.splash-logo{
+  width: 78px;
+  height: 78px;
+  border-radius: 20px;
+  z-index:1;
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
 }
 
-.download-update {
-    position: absolute;
-    left: 25%;
-    margin-top: 20px;
-    width: 200px;
-    font: normal normal bold 22px / 45px Poppins;
-    color: var(--color);
-    border: 2px solid var(--color);
-    border-radius: 15px;
-    transition: background-color .2s, color .2s;
+.splash-title{
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-size: 1.15rem;
+  color: transparent;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  -webkit-background-clip:text;
+  background-clip:text;
+  text-shadow: 0 10px 24px rgba(0,0,0,.35);
 }
 
-.download-update:hover {
-    background-color: var(--color);
-    color: var(--background);
-    cursor: pointer;
+/* ========================================================================== */
+/* Texts                                                                       */
+/* ========================================================================== */
+
+.splash-message{
+  font-size: 1.03rem;
+  font-weight: 900;
+  line-height: 1.25;
+  min-height: 1.4em;
+  color: rgba(255,255,255,0.95);
 }
 
-.message.opacity {
-    opacity: 1;
+.splash-author{
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.60);
+  min-height: 1.2em;
+  margin-top: -4px;
 }
 
-.progress {
-    position: absolute;
-    top: 410px;
-    left: 106px;
-    width: 189px;
-    height: 10px;
-    appearance: none;
-    transition: opacity .2s;
-    opacity: 0;
+.splash-author .author{
+  font-weight: 900;
+  color: rgba(255,255,255,0.78);
 }
 
-.show {
-    opacity: 1;
+/* Status (pill) */
+.message{
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-weight: 850;
+  font-size: 0.98rem;
+  width: 100%;
+  min-height: 44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color: rgba(245,245,245,0.92);
 }
 
-.progress::-webkit-progress-bar {
-    background-color: var(--background);
-    border: solid 1px var(--element-color);
-    border-radius: 10px;
+/* ========================================================================== */
+/* Progress (stable show/hide)                                                 */
+/* ========================================================================== */
+
+.progress-wrap{
+  width:100%;
+  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+
+  /* caché par défaut */
+  opacity: 0;
+  max-height: 0;
+  overflow:hidden;
+  transform: translateY(-4px);
+  transition: opacity .4s ease, max-height .4s ease, transform .4s ease;
 }
 
-.progress::-webkit-progress-value {
-    background-color: var(--element-color);
-    border-radius: 10px;
+.progress-wrap.show{
+  opacity: 1;
+  max-height: 140px;
+  transform: translateY(0);
+}
+
+.progress-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.progress-top .percent{
+  font-weight: 900;
+  color: rgba(245,245,245,0.90);
+}
+
+progress.progress{
+  width:100%;
+  height: 10px;
+  appearance:none;
+  border-radius: 999px;
+  overflow:hidden;
+}
+
+progress.progress::-webkit-progress-bar{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+}
+
+progress.progress::-webkit-progress-value{
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 999px;
+}
+
+/* ========================================================================== */
+/* Button                                                                      */
+/* ========================================================================== */
+
+.download-update{
+  width: 100%;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.20);
+  color: rgba(245,245,245,0.92);
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition: transform var(--t2), border-color var(--t), background var(--t);
+}
+
+.download-update:hover{
+  transform: translateY(-1px);
+  border-color: rgba(0,208,132,0.28);
+  background: rgba(0,208,132,0.10);
+}
+
+/* ========================================================================== */
+/* Animations + compat                                                         */
+/* ========================================================================== */
+
+.fade-in{
+  animation: fadeInUp .6s var(--t2) both;
+}
+
+@keyframes fadeInUp{
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.pulse{
+  animation: pulseGlow 1.9s ease-in-out infinite;
+}
+
+@keyframes pulseGlow{
+  0%,100% { box-shadow: var(--shadow2); }
+  50%     { box-shadow: var(--shadow2), 0 0 22px rgba(0,194,255,0.18); }
+}
+
+/* Compat anciennes classes (si ton JS les utilise) */
+.splash.opacity,
+.splash-message.opacity,
+.splash-author.opacity,
+.message.opacity{
+  opacity: 1 !important;
+}
+
+.splash.translate{
+  transform: translate(-50%) translateY(-10px);
 }
