@@ -2,12 +2,8 @@
  * @author Luuxis
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
-import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from '../utils.js'
+import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from "../utils.js";
 import { rpcSet } from "../utils/discordRpc.js";
-
-// ✅ SkinView3D via bundle (script tag)
-// window.skinview3d must exist (assets/js/libs/skinview3d.bundle.js)
-const SkinView3D = () => window.skinview3d;
 
 rpcSet({
   details: "In the launcher",
@@ -16,8 +12,8 @@ rpcSet({
   largeImageText: "Launcher",
 });
 
-const { Launch } = require('minecraft-java-core')
-const { shell, ipcRenderer } = require('electron')
+const { Launch } = require("minecraft-java-core");
+const { shell, ipcRenderer } = require("electron");
 
 class Home {
   static id = "home";
@@ -26,89 +22,112 @@ class Home {
     this.config = config;
     this.db = new database();
 
-    this.news()
-    this.socialLick()
-    this.instancesSelect()
+    // News + socials + instance select
+    await this.news();
+    this.socialLick();
+    await this.instancesSelect();
 
-    // ✅ AJOUT: init skin 3D (sans toucher .player-head)
-    this.initSkin3D().catch(e => console.warn('[SKIN3D] init error:', e));
+    // Skin 3D (bundle chargé via <script src="./js/libs/skinview3d.bundle.js">)
+    this.initSkin3D().catch((e) => console.warn("[SKIN3D] init error:", e));
 
-    document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
+    // Settings
+    const settingsBtn = document.querySelector(".settings-btn");
+    if (settingsBtn) settingsBtn.addEventListener("click", () => changePanel("settings"));
   }
 
-  /* ============================================================
-     ✅ SKINVIEW3D (bundle) - inject left panel + canvas + viewer
-     ============================================================ */
+  /* ========================== SAFE HTML HELPERS ========================== */
 
-async initSkin3D() {
-  if (!window.skinview3d) {
-    console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
-    return;
+  escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  const { SkinViewer, IdleAnimation } = window.skinview3d;
-
-  const canvas = document.getElementById("skin3d");
-  if (!canvas) return;
-
-  // ✅ éviter le viewer en double
-  try { this.skinViewer?.dispose?.(); } catch {}
-  this.skinViewer = null;
-
-  const loadingEl =
-    document.getElementById("skin3d-loading") ||
-    document.querySelector(".skin-loading");
-
-  if (loadingEl) {
-    loadingEl.style.display = "block";
-    loadingEl.style.opacity = "1";
+  safeContent(str) {
+    // autorise uniquement le texte + retours ligne -> <br>
+    return this.escapeHtml(str).replace(/\n/g, "<br>");
   }
 
-  this.skinViewer = new SkinViewer({
-    canvas,
-    width: 260,
-    height: 380,
-  });
+  /* ========================== SKINVIEW3D (BUNDLE) ========================= */
 
-  this.skinViewer.background = null;
-  this.skinViewer.autoRotate = true;
-  this.skinViewer.autoRotateSpeed = 0.8;
-  this.skinViewer.animation = new IdleAnimation();
+  async initSkin3D() {
+    if (!window.skinview3d) {
+      console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
+      return;
+    }
 
-  const configClient = await this.ensureConfigClient();
-  const auth = await this.db.readData("accounts", configClient.account_selected);
+    const { SkinViewer, IdleAnimation } = window.skinview3d;
 
-  const name = auth?.name || "Steve";
-  const skinUrl = `https://minotar.net/skin/${encodeURIComponent(name)}`;
+    const canvas = document.getElementById("skin3d");
+    if (!canvas) return;
 
-  try {
-    await this.skinViewer.loadSkin(skinUrl);
-  } catch (e) {
-    console.warn("[SKIN3D] loadSkin failed:", e);
+    // éviter le viewer en double
+    try {
+      this.skinViewer?.dispose?.();
+    } catch {}
+    this.skinViewer = null;
+
+    const loadingEl =
+      document.getElementById("skin3d-loading") || document.querySelector(".skin-loading");
+
+    // afficher "Chargement..." AU DÉBUT
+    if (loadingEl) {
+      loadingEl.style.display = "block";
+      loadingEl.style.opacity = "1";
+      loadingEl.textContent = "Chargement...";
+    }
+
+    // Crée viewer
+    this.skinViewer = new SkinViewer({
+      canvas,
+      width: 260,
+      height: 380,
+    });
+
+    this.skinViewer.background = null;
+    this.skinViewer.fov = 45;
+    this.skinViewer.zoom = 0.95;
+
+    this.skinViewer.autoRotate = true;
+    this.skinViewer.autoRotateSpeed = 0.8;
+    this.skinViewer.animation = new IdleAnimation();
+
+    // Cadrage fin
+    this.skinViewer.camera.position.x = 0;
+    this.skinViewer.camera.position.y = 16;
+    this.skinViewer.camera.lookAt(0, 16, 0);
+
+    // Charge skin (minotar)
+    const configClient = await this.ensureConfigClient();
+    const auth = await this.db.readData("accounts", configClient.account_selected);
+
+    const name = auth?.name || "Steve";
+    const skinUrl = `https://minotar.net/skin/${encodeURIComponent(name)}`;
+
+    try {
+      await this.skinViewer.loadSkin(skinUrl);
+
+      // ✅ IMPORTANT : cacher "Chargement..." UNIQUEMENT si le skin est chargé
+      if (loadingEl) {
+        loadingEl.style.opacity = "0";
+        setTimeout(() => {
+          loadingEl.style.display = "none";
+        }, 200);
+      }
+    } catch (e) {
+      console.warn("[SKIN3D] loadSkin failed:", e);
+
+      // si erreur, laisse un message (au lieu de rester sur "Chargement...")
+      if (loadingEl) {
+        loadingEl.style.opacity = "1";
+        loadingEl.style.display = "block";
+        loadingEl.textContent = "Impossible de charger le skin";
+      }
+    }
   }
-
-  // ✅ Réglages centrage / cadrage
-this.skinViewer.fov = 45;          // angle caméra (plus petit = plus "zoom")
-this.skinViewer.zoom = 0.95;       // zoom global
-this.skinViewer.autoRotate = true;
-this.skinViewer.autoRotateSpeed = 0.8;
-
-// recadrage fin (monte/descend le perso)
-this.skinViewer.camera.position.y = 16;  // + = monte, - = descend
-this.skinViewer.camera.position.x = 0;   // gauche/droite
-this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
-
-  // ✅ cacher "Chargement..." une fois fini (même si erreur)
-  if (loadingEl) {
-    loadingEl.style.opacity = "0";
-    setTimeout(() => {
-      loadingEl.style.display = "none";
-    }, 200);
-  }
-}
-
-
-
 
   destroySkin3D() {
     try {
@@ -124,32 +143,20 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
   }
 
   async resolveSkinUrlSafe() {
-    // fallback local (mets un png valide sinon change le chemin)
     const fallbackLocal = "assets/images/default-skin.png";
 
     const configClient = await this.ensureConfigClient();
     const auth = await this.db.readData("accounts", configClient.account_selected);
 
-    const name =
-      auth?.name ||
-      auth?.username ||
-      auth?.profile?.name ||
-      "Joueur";
+    const name = auth?.name || auth?.username || auth?.profile?.name || "Joueur";
 
-    let uuid =
-      auth?.uuid ||
-      auth?.profile?.id ||
-      auth?.profile?.uuid ||
-      null;
-
+    let uuid = auth?.uuid || auth?.profile?.id || auth?.profile?.uuid || null;
     if (uuid) uuid = String(uuid).replace(/-/g, "");
 
-    // UUID -> meilleur
     if (uuid && uuid.length >= 32) {
       return { name, skinUrl: `https://crafatar.com/skins/${uuid}` };
     }
 
-    // nom -> fallback
     if (name) {
       return { name, skinUrl: `https://minotar.net/skin/${encodeURIComponent(name)}` };
     }
@@ -157,65 +164,32 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
     return { name, skinUrl: fallbackLocal };
   }
 
-  /* ============================================================ */
+  /* =============================== NEWS (SAFE) ============================ */
 
   async news() {
-    let newsElement = document.querySelector('.news-list');
-    let news = await config.getNews().then(res => res).catch(err => false);
-    if (news) {
-      if (!news.length) {
-        let blockNews = document.createElement('div');
-        blockNews.classList.add('news-block');
-        blockNews.innerHTML = `
-          <div class="news-header">
-            <img class="server-status-icon" src="assets/images/icon.png">
-            <div class="header-text">
-              <div class="title">Aucun news n'ai actuellement disponible.</div>
-            </div>
-            <div class="date">
-              <div class="day">1</div>
-              <div class="month">Janvier</div>
-            </div>
-          </div>
-          <div class="news-content">
-            <div class="bbWrapper">
-              <p>Vous pourrez suivre ici toutes les news relative au serveur.</p>
-            </div>
-          </div>`
-        newsElement.appendChild(blockNews);
-      } else {
-        for (let News of news) {
-          let date = this.getdate(News.publish_date)
-          let blockNews = document.createElement('div');
-          blockNews.classList.add('news-block');
-          blockNews.innerHTML = `
-            <div class="news-header">
-              <img class="server-status-icon" src="assets/images/icon.png">
-              <div class="header-text">
-                <div class="title">${News.title}</div>
-              </div>
-              <div class="date">
-                <div class="day">${date.day}</div>
-                <div class="month">${date.month}</div>
-              </div>
-            </div>
-            <div class="news-content">
-              <div class="bbWrapper">
-                <p>${(News.content ?? '').replace(/\n/g, '</br>')}</p>
-                <p class="news-author">Auteur - <span>${News.author ?? 'Inconnu'}</span></p>
-              </div>
-            </div>`
-          newsElement.appendChild(blockNews);
-        }
-      }
-    } else {
-      let blockNews = document.createElement('div');
-      blockNews.classList.add('news-block');
+    const newsElement = document.querySelector(".news-list");
+    if (!newsElement) return;
+
+    // évite l’empilement si init() est rappelé
+    newsElement.innerHTML = "";
+
+    let news = null;
+    try {
+      news = await config.getNews();
+    } catch (err) {
+      console.warn("[NEWS] getNews error:", err);
+      news = false;
+    }
+
+    // Pas de news
+    if (Array.isArray(news) && news.length === 0) {
+      const blockNews = document.createElement("div");
+      blockNews.classList.add("news-block");
       blockNews.innerHTML = `
         <div class="news-header">
           <img class="server-status-icon" src="assets/images/icon.png">
           <div class="header-text">
-            <div class="title">Error.</div>
+            <div class="title">Aucune news n'est actuellement disponible.</div>
           </div>
           <div class="date">
             <div class="day">1</div>
@@ -224,23 +198,83 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
         </div>
         <div class="news-content">
           <div class="bbWrapper">
-            <p>Impossible de contacter le serveur des news.</br>Merci de vérifier votre configuration.</p>
+            <p>Vous pourrez suivre ici toutes les news relatives au serveur.</p>
           </div>
-        </div>`
+        </div>
+      `;
+      newsElement.appendChild(blockNews);
+      return;
+    }
+
+    // Erreur serveur news
+    if (!news || !Array.isArray(news)) {
+      const blockNews = document.createElement("div");
+      blockNews.classList.add("news-block");
+      blockNews.innerHTML = `
+        <div class="news-header">
+          <img class="server-status-icon" src="assets/images/icon.png">
+          <div class="header-text">
+            <div class="title">Erreur</div>
+          </div>
+          <div class="date">
+            <div class="day">1</div>
+            <div class="month">Janvier</div>
+          </div>
+        </div>
+        <div class="news-content">
+          <div class="bbWrapper">
+            <p>Impossible de contacter le serveur des news.<br>Merci de vérifier votre configuration.</p>
+          </div>
+        </div>
+      `;
+      newsElement.appendChild(blockNews);
+      return;
+    }
+
+    // Render (SAFE)
+    for (const News of news) {
+      const date = this.getdate(News.publish_date);
+
+      const title = this.escapeHtml(News.title ?? "Sans titre");
+      const author = this.escapeHtml(News.author ?? "Inconnu");
+      const content = this.safeContent(News.content ?? "");
+
+      const blockNews = document.createElement("div");
+      blockNews.classList.add("news-block");
+      blockNews.innerHTML = `
+        <div class="news-header">
+          <img class="server-status-icon" src="assets/images/icon.png">
+          <div class="header-text">
+            <div class="title">${title}</div>
+          </div>
+          <div class="date">
+            <div class="day">${this.escapeHtml(date.day)}</div>
+            <div class="month">${this.escapeHtml(date.month)}</div>
+          </div>
+        </div>
+        <div class="news-content">
+          <div class="bbWrapper">
+            <p>${content}</p>
+            <p class="news-author">Auteur - <span>${author}</span></p>
+          </div>
+        </div>
+      `;
       newsElement.appendChild(blockNews);
     }
   }
 
-  socialLick() {
-    const socials = document.querySelectorAll('.social-block');
+  /* =============================== SOCIALS ================================ */
 
-    socials.forEach(block => {
-      block.addEventListener('click', (e) => {
-        const el = e.currentTarget || e.target.closest('.social-block');
+  socialLick() {
+    const socials = document.querySelectorAll(".social-block");
+
+    socials.forEach((block) => {
+      block.addEventListener("click", (e) => {
+        const el = e.currentTarget || e.target.closest(".social-block");
         const url = el?.dataset?.url;
 
         if (!url) {
-          console.warn('[SOCIAL] data-url vide sur .social-block', el);
+          console.warn("[SOCIAL] data-url vide sur .social-block", el);
           return;
         }
         shell.openExternal(url);
@@ -248,201 +282,209 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
     });
   }
 
+  /* ============================= CONFIG CLIENT ============================ */
+
   async ensureConfigClient() {
-    let configClient = await this.db.readData('configClient')
-    configClient = configClient ?? {}
+    let configClient = await this.db.readData("configClient");
+    configClient = configClient ?? {};
 
     configClient.launcher_config = configClient.launcher_config ?? {
       closeLauncher: "close-all", // close-all | close-launcher
       download_multi: 10,
-      intelEnabledMac: false
-    }
+      intelEnabledMac: false,
+    };
 
     configClient.java_config = configClient.java_config ?? {
       java_path: null,
-      java_memory: { min: 2, max: 4 }
-    }
-    configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 }
-    configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2
-    configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4
+      java_memory: { min: 2, max: 4 },
+    };
+    configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 };
+    configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2;
+    configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4;
 
     configClient.game_config = configClient.game_config ?? {
-      screen_size: { width: 1280, height: 720 }
-    }
-    configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 }
-    configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280
-    configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720
+      screen_size: { width: 1280, height: 720 },
+    };
+    configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 };
+    configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280;
+    configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720;
 
-    if (configClient.instance_selct === undefined) configClient.instance_selct = null
+    if (configClient.instance_selct === undefined) configClient.instance_selct = null;
 
-    try { await this.db.updateData('configClient', configClient) } catch (e) { /* ignore */ }
+    try {
+      await this.db.updateData("configClient", configClient);
+    } catch {}
 
-    return configClient
+    return configClient;
   }
 
-  async instancesSelect() {
-    let configClient = await this.ensureConfigClient()
-    let auth = await this.db.readData('accounts', configClient.account_selected)
-    let instancesList = await config.getInstanceList()
-    let instanceSelect = instancesList.find(i => i.name == configClient?.instance_selct) ? configClient?.instance_selct : null
+  /* ============================ INSTANCES SELECT =========================== */
 
-    let instanceBTN = document.querySelector('.play-instance')
-    let instancePopup = document.querySelector('.instance-popup')
-    let instancesListPopup = document.querySelector('.instances-List')
-    let instanceCloseBTN = document.querySelector('.close-popup')
+  async instancesSelect() {
+    let configClient = await this.ensureConfigClient();
+    let auth = await this.db.readData("accounts", configClient.account_selected);
+    let instancesList = await config.getInstanceList();
+
+    let instanceSelect = instancesList.find((i) => i.name == configClient?.instance_selct)
+      ? configClient?.instance_selct
+      : null;
+
+    let instanceBTN = document.querySelector(".play-instance");
+    let instancePopup = document.querySelector(".instance-popup");
+    let instancesListPopup = document.querySelector(".instances-List");
+    let instanceCloseBTN = document.querySelector(".close-popup");
+
+    if (!instanceBTN || !instancePopup || !instancesListPopup || !instanceCloseBTN) {
+      console.warn("[INSTANCE] éléments UI manquants");
+      return;
+    }
 
     if (instancesList.length === 1) {
-      document.querySelector('.instance-select').style.display = 'none'
-      instanceBTN.style.paddingRight = '0'
+      const sel = document.querySelector(".instance-select");
+      if (sel) sel.style.display = "none";
+      instanceBTN.style.paddingRight = "0";
     }
 
     if (!instanceSelect) {
-      let newInstanceSelect = instancesList.find(i => i.whitelistActive == false) ?? instancesList[0]
-      let configClient = await this.ensureConfigClient()
-      configClient.instance_selct = newInstanceSelect?.name ?? null
-      instanceSelect = configClient.instance_selct
-      await this.db.updateData('configClient', configClient)
+      let newInstanceSelect = instancesList.find((i) => i.whitelistActive == false) ?? instancesList[0];
+      configClient.instance_selct = newInstanceSelect?.name ?? null;
+      instanceSelect = configClient.instance_selct;
+      await this.db.updateData("configClient", configClient);
     }
 
     for (let instance of instancesList) {
       if (instance.whitelistActive) {
-        let whitelist = instance.whitelist?.find(whitelist => whitelist == auth?.name)
+        let whitelist = instance.whitelist?.find((w) => w == auth?.name);
         if (whitelist !== auth?.name) {
           if (instance.name == instanceSelect) {
-            let newInstanceSelect = instancesList.find(i => i.whitelistActive == false) ?? instancesList[0]
-            let configClient = await this.ensureConfigClient()
-            configClient.instance_selct = newInstanceSelect?.name ?? null
-            instanceSelect = configClient.instance_selct
-            setStatus(newInstanceSelect?.status ?? instance.status)
-            await this.db.updateData('configClient', configClient)
+            let newInstanceSelect = instancesList.find((i) => i.whitelistActive == false) ?? instancesList[0];
+            configClient.instance_selct = newInstanceSelect?.name ?? null;
+            instanceSelect = configClient.instance_selct;
+            setStatus(newInstanceSelect?.status ?? instance.status);
+            await this.db.updateData("configClient", configClient);
           }
         }
       } else {
-        console.log(`Initializing instance ${instance.name}...`)
+        console.log(`Initializing instance ${instance.name}...`);
       }
-      if (instance.name == instanceSelect) setStatus(instance.status)
+      if (instance.name == instanceSelect) setStatus(instance.status);
     }
 
-    instancePopup.addEventListener('click', async e => {
-      let configClient = await this.ensureConfigClient()
+    instancePopup.addEventListener("click", async (e) => {
+      let configClient = await this.ensureConfigClient();
 
-      if (e.target.classList.contains('instance-elements')) {
-        let newInstanceSelect = e.target.id
-        let activeInstanceSelect = document.querySelector('.active-instance')
+      if (e.target.classList.contains("instance-elements")) {
+        let newInstanceSelect = e.target.id;
+        let activeInstanceSelect = document.querySelector(".active-instance");
 
-        if (activeInstanceSelect) activeInstanceSelect.classList.toggle('active-instance');
-        e.target.classList.add('active-instance');
+        if (activeInstanceSelect) activeInstanceSelect.classList.toggle("active-instance");
+        e.target.classList.add("active-instance");
 
-        configClient.instance_selct = newInstanceSelect
-        await this.db.updateData('configClient', configClient)
+        configClient.instance_selct = newInstanceSelect;
+        await this.db.updateData("configClient", configClient);
 
-        instanceSelect = newInstanceSelect
+        instanceSelect = newInstanceSelect;
 
-        instancePopup.style.display = 'none'
-        let instance = await config.getInstanceList()
-        let options = instance.find(i => i.name == configClient.instance_selct)
-        await setStatus(options?.status)
+        instancePopup.style.display = "none";
+        let instance = await config.getInstanceList();
+        let options = instance.find((i) => i.name == configClient.instance_selct);
+        await setStatus(options?.status);
 
-        // ✅ refresh skin when instance/account changes
+        // refresh skin
         this.initSkin3D().catch(() => {});
       }
-    })
+    });
 
-    instanceBTN.addEventListener('click', async e => {
-      let configClient = await this.ensureConfigClient()
-      let instanceSelect = configClient.instance_selct
-      let auth = await this.db.readData('accounts', configClient.account_selected)
+    instanceBTN.addEventListener("click", async (e) => {
+      let configClient = await this.ensureConfigClient();
+      let instanceSelect = configClient.instance_selct;
+      let auth = await this.db.readData("accounts", configClient.account_selected);
 
-      if (e.target.classList.contains('instance-select')) {
-        instancesListPopup.innerHTML = ''
+      if (e.target.classList.contains("instance-select")) {
+        instancesListPopup.innerHTML = "";
+
         for (let instance of instancesList) {
-          if (instance.whitelistActive) {
-            instance.whitelist?.map(whitelist => {
-              if (whitelist == auth?.name) {
-                if (instance.name == instanceSelect) {
-                  instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
-                } else {
-                  instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
-                }
-              }
-            })
-          } else {
-            if (instance.name == instanceSelect) {
-              instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
-            } else {
-              instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
-            }
-          }
+          const isAllowed =
+            !instance.whitelistActive ||
+            (Array.isArray(instance.whitelist) && instance.whitelist.includes(auth?.name));
+
+          if (!isAllowed) continue;
+
+          const active = instance.name == instanceSelect ? " active-instance" : "";
+          instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements${active}">${instance.name}</div>`;
         }
 
-        instancePopup.style.display = 'flex'
+        instancePopup.style.display = "flex";
+        return;
       }
 
-      if (!e.target.classList.contains('instance-select')) this.startGame()
-    })
+      if (!e.target.classList.contains("instance-select")) this.startGame();
+    });
 
-    instanceCloseBTN.addEventListener('click', () => instancePopup.style.display = 'none')
+    instanceCloseBTN.addEventListener("click", () => (instancePopup.style.display = "none"));
   }
 
-  async startGame() {
-    let launch = new Launch()
-    let configClient = await this.ensureConfigClient()
-    let instances = await config.getInstanceList()
-    let authenticator = await this.db.readData('accounts', configClient.account_selected)
-    let options = instances.find(i => i.name == configClient.instance_selct)
+  /* ================================ LAUNCH ================================ */
 
-    let playInstanceBTN = document.querySelector('.play-instance')
-    let infoStartingBOX = document.querySelector('.info-starting-game')
-    let infoStarting = document.querySelector(".info-starting-game-text")
-    let progressBar = document.querySelector('.progress-bar')
+  async startGame() {
+    let launch = new Launch();
+    let configClient = await this.ensureConfigClient();
+    let instances = await config.getInstanceList();
+    let authenticator = await this.db.readData("accounts", configClient.account_selected);
+    let options = instances.find((i) => i.name == configClient.instance_selct);
+
+    let playInstanceBTN = document.querySelector(".play-instance");
+    let infoStartingBOX = document.querySelector(".info-starting-game");
+    let infoStarting = document.querySelector(".info-starting-game-text");
+    let progressBar = document.querySelector(".progress-bar");
 
     if (!options) {
-      const p = new popup()
+      const p = new popup();
       p.openPopup({
-        title: 'Erreur',
+        title: "Erreur",
         content: `Instance introuvable : "${configClient.instance_selct}"`,
-        color: 'red',
-        options: true
-      })
-      console.error('[LAUNCH] Instance introuvable, configClient=', configClient, 'instances=', instances)
-      return
+        color: "red",
+        options: true,
+      });
+      console.error("[LAUNCH] Instance introuvable, configClient=", configClient, "instances=", instances);
+      return;
     }
 
-    const loaderCfg = options.loader ?? options.loadder
+    const loaderCfg = options.loader ?? options.loadder;
 
     if (!loaderCfg) {
-      const p = new popup()
+      const p = new popup();
       p.openPopup({
-        title: 'Erreur',
+        title: "Erreur",
         content: `Configuration invalide : champ "loader" manquant (ou "loadder").`,
-        color: 'red',
-        options: true
-      })
-      console.error('[LAUNCH] options=', options)
-      return
+        color: "red",
+        options: true,
+      });
+      console.error("[LAUNCH] options=", options);
+      return;
     }
 
-    const minecraftVersion = loaderCfg.minecraft_version ?? loaderCfg.minecraftVersion
+    const minecraftVersion = loaderCfg.minecraft_version ?? loaderCfg.minecraftVersion;
     if (!minecraftVersion) {
-      const p = new popup()
+      const p = new popup();
       p.openPopup({
-        title: 'Erreur',
+        title: "Erreur",
         content: `Configuration invalide : "minecraft_version" manquant dans loader.`,
-        color: 'red',
-        options: true
-      })
-      console.error('[LAUNCH] loaderCfg=', loaderCfg)
-      return
+        color: "red",
+        options: true,
+      });
+      console.error("[LAUNCH] loaderCfg=", loaderCfg);
+      return;
     }
 
-    const loaderType = loaderCfg.loadder_type ?? loaderCfg.loader_type ?? loaderCfg.type ?? 'none'
-    const loaderBuild = loaderCfg.loadder_version ?? loaderCfg.loader_version ?? loaderCfg.build
+    const loaderType = loaderCfg.loadder_type ?? loaderCfg.loader_type ?? loaderCfg.type ?? "none";
+    const loaderBuild = loaderCfg.loadder_version ?? loaderCfg.loader_version ?? loaderCfg.build;
 
     let opt = {
       url: options.url,
       authenticator,
       timeout: 10000,
-      path: `${await appdata()}/${process.platform == 'darwin' ? this.config.dataDirectory : `.${this.config.dataDirectory}`}`,
+      path: `${await appdata()}/${process.platform == "darwin" ? this.config.dataDirectory : `.${this.config.dataDirectory}`}`,
       instance: options.name,
       version: minecraftVersion,
       detached: configClient.launcher_config?.closeLauncher == "close-all" ? false : true,
@@ -452,7 +494,7 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
       loader: {
         type: loaderType,
         build: loaderBuild,
-        enable: loaderType == 'none' ? false : true
+        enable: loaderType == "none" ? false : true,
       },
 
       verify: options.verify,
@@ -461,99 +503,117 @@ this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
 
       screen: {
         width: configClient.game_config?.screen_size?.width ?? 1280,
-        height: configClient.game_config?.screen_size?.height ?? 720
+        height: configClient.game_config?.screen_size?.height ?? 720,
       },
 
       memory: {
         min: `${((configClient.java_config?.java_memory?.min ?? 2) * 1024)}M`,
-        max: `${((configClient.java_config?.java_memory?.max ?? 4) * 1024)}M`
-      }
-    }
+        max: `${((configClient.java_config?.java_memory?.max ?? 4) * 1024)}M`,
+      },
+    };
 
     launch.Launch(opt);
 
-    playInstanceBTN.style.display = "none"
-    infoStartingBOX.style.display = "block"
-    progressBar.style.display = "";
-    ipcRenderer.send('main-window-progress-load')
+    if (playInstanceBTN) playInstanceBTN.style.display = "none";
+    if (infoStartingBOX) infoStartingBOX.style.display = "block";
+    if (progressBar) progressBar.style.display = "";
+    ipcRenderer.send("main-window-progress-load");
 
-    launch.on('extract', extract => {
-      ipcRenderer.send('main-window-progress-load')
+    launch.on("extract", (extract) => {
+      ipcRenderer.send("main-window-progress-load");
       console.log(extract);
     });
 
-    launch.on('progress', (progress, size) => {
-      infoStarting.innerHTML = `Téléchargement ${((progress / size) * 100).toFixed(0)}%`
-      ipcRenderer.send('main-window-progress', { progress, size })
-      progressBar.value = progress;
-      progressBar.max = size;
+    launch.on("progress", (progress, size) => {
+      if (infoStarting) infoStarting.innerHTML = `Téléchargement ${((progress / size) * 100).toFixed(0)}%`;
+      ipcRenderer.send("main-window-progress", { progress, size });
+      if (progressBar) {
+        progressBar.value = progress;
+        progressBar.max = size;
+      }
     });
 
-    launch.on('check', (progress, size) => {
-      infoStarting.innerHTML = `Vérification ${((progress / size) * 100).toFixed(0)}%`
-      ipcRenderer.send('main-window-progress', { progress, size })
-      progressBar.value = progress;
-      progressBar.max = size;
+    launch.on("check", (progress, size) => {
+      if (infoStarting) infoStarting.innerHTML = `Vérification ${((progress / size) * 100).toFixed(0)}%`;
+      ipcRenderer.send("main-window-progress", { progress, size });
+      if (progressBar) {
+        progressBar.value = progress;
+        progressBar.max = size;
+      }
     });
 
-    launch.on('patch', patch => {
+    launch.on("patch", (patch) => {
       console.log(patch);
-      ipcRenderer.send('main-window-progress-load')
-      infoStarting.innerHTML = `Patch en cours...`
+      ipcRenderer.send("main-window-progress-load");
+      if (infoStarting) infoStarting.innerHTML = `Patch en cours...`;
     });
 
-    launch.on('data', (e) => {
-      progressBar.style.display = "none"
-      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
-        ipcRenderer.send("main-window-hide")
-      };
-      new logger('Minecraft', '#36b030');
-      ipcRenderer.send('main-window-progress-load')
-      infoStarting.innerHTML = `Demarrage en cours...`
+    launch.on("data", (e) => {
+      if (progressBar) progressBar.style.display = "none";
+      if (configClient.launcher_config?.closeLauncher == "close-launcher") {
+        ipcRenderer.send("main-window-hide");
+      }
+      new logger("Minecraft", "#36b030");
+      ipcRenderer.send("main-window-progress-load");
+      if (infoStarting) infoStarting.innerHTML = `Demarrage en cours...`;
       console.log(e);
-    })
-
-    launch.on('close', code => {
-      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
-        ipcRenderer.send("main-window-show")
-      };
-      ipcRenderer.send('main-window-progress-reset')
-      infoStartingBOX.style.display = "none"
-      playInstanceBTN.style.display = "flex"
-      infoStarting.innerHTML = `Vérification`
-      new logger(pkg.name, '#7289da');
-      console.log('Close');
     });
 
-    launch.on('error', err => {
-      let popupError = new popup()
+    launch.on("close", () => {
+      if (configClient.launcher_config?.closeLauncher == "close-launcher") {
+        ipcRenderer.send("main-window-show");
+      }
+      ipcRenderer.send("main-window-progress-reset");
+      if (infoStartingBOX) infoStartingBOX.style.display = "none";
+      if (playInstanceBTN) playInstanceBTN.style.display = "flex";
+      if (infoStarting) infoStarting.innerHTML = `Vérification`;
+      new logger(pkg.name, "#7289da");
+      console.log("Close");
+    });
 
+    launch.on("error", (err) => {
+      let popupError = new popup();
       popupError.openPopup({
-        title: 'Erreur',
+        title: "Erreur",
         content: err?.error ?? err?.message ?? JSON.stringify(err),
-        color: 'red',
-        options: true
-      })
+        color: "red",
+        options: true,
+      });
 
-      if (configClient.launcher_config?.closeLauncher == 'close-launcher') {
-        ipcRenderer.send("main-window-show")
-      };
-      ipcRenderer.send('main-window-progress-reset')
-      infoStartingBOX.style.display = "none"
-      playInstanceBTN.style.display = "flex"
-      infoStarting.innerHTML = `Vérification`
-      new logger(pkg.name, '#7289da');
+      if (configClient.launcher_config?.closeLauncher == "close-launcher") {
+        ipcRenderer.send("main-window-show");
+      }
+      ipcRenderer.send("main-window-progress-reset");
+      if (infoStartingBOX) infoStartingBOX.style.display = "none";
+      if (playInstanceBTN) playInstanceBTN.style.display = "flex";
+      if (infoStarting) infoStarting.innerHTML = `Vérification`;
+      new logger(pkg.name, "#7289da");
       console.log(err);
     });
   }
 
+  /* =============================== DATE UTILS ============================= */
+
   getdate(e) {
-    let date = new Date(e)
-    let year = date.getFullYear()
-    let month = date.getMonth() + 1
-    let day = date.getDate()
-    let allMonth = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
-    return { year: year, month: allMonth[month - 1], day: day }
+    let date = new Date(e);
+    let year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+    let allMonth = [
+      "janvier",
+      "février",
+      "mars",
+      "avril",
+      "mai",
+      "juin",
+      "juillet",
+      "août",
+      "septembre",
+      "octobre",
+      "novembre",
+      "décembre",
+    ];
+    return { year: year, month: allMonth[month - 1], day: day };
   }
 }
 
