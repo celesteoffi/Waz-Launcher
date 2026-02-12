@@ -285,38 +285,73 @@ class Home {
   /* ============================= CONFIG CLIENT ============================ */
 
   async ensureConfigClient() {
-    let configClient = await this.db.readData("configClient");
-    configClient = configClient ?? {};
+  let configClient = await this.db.readData("configClient");
+  configClient = configClient ?? {};
 
-    configClient.launcher_config = configClient.launcher_config ?? {
-      closeLauncher: "close-all", // close-all | close-launcher
-      download_multi: 10,
-      intelEnabledMac: false,
-    };
+  // ----------------- defaults -----------------
+  configClient.launcher_config = configClient.launcher_config ?? {
+    closeLauncher: "close-all", // close-all | close-launcher
+    download_multi: 10,
+    intelEnabledMac: false,
+  };
 
-    configClient.java_config = configClient.java_config ?? {
-      java_path: null,
-      java_memory: { min: 2, max: 4 },
-    };
-    configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 };
-    configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2;
-    configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4;
+  configClient.java_config = configClient.java_config ?? {
+    java_path: null,
+    java_memory: { min: 2, max: 4 },
+  };
+  configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 };
+  configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2;
+  configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4;
 
-    configClient.game_config = configClient.game_config ?? {
-      screen_size: { width: 1280, height: 720 },
-    };
-    configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 };
-    configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280;
-    configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720;
+  configClient.game_config = configClient.game_config ?? {
+    screen_size: { width: 1280, height: 720 },
+  };
+  configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 };
+  configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280;
+  configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720;
 
-    if (configClient.instance_selct === undefined) configClient.instance_selct = null;
+  if (configClient.instance_selct === undefined) configClient.instance_selct = null;
 
-    try {
-      await this.db.updateData("configClient", configClient);
-    } catch {}
+  // ----------------- ✅ FIX LOGIN: account_selected -----------------
+  // On tente de récupérer tous les comptes
+  let accountsRaw = null;
+  try {
+    accountsRaw = await this.db.readData("accounts"); // selon ta DB, ça peut renvoyer object ou array
+  } catch {}
 
-    return configClient;
+  // Normalise en tableau [{id, ...data}]
+  let accountsList = [];
+  if (Array.isArray(accountsRaw)) {
+    accountsList = accountsRaw
+      .filter(Boolean)
+      .map((a) => ({
+        id: a?.uuid || a?.id || a?.profile?.id || a?.profile?.uuid || a?.name,
+        data: a,
+      }))
+      .filter((x) => x.id);
+  } else if (accountsRaw && typeof accountsRaw === "object") {
+    accountsList = Object.entries(accountsRaw)
+      .map(([id, data]) => ({ id, data }))
+      .filter((x) => x.id && x.data);
   }
+
+  // Vérifie si l'account_selected existe vraiment
+  const selectedId = configClient.account_selected;
+  const selectedExists = !!accountsList.find((a) => String(a.id) === String(selectedId));
+
+  // Si pas sélectionné ou sélection invalide -> choisir le premier compte
+  if (!selectedId || !selectedExists) {
+    configClient.account_selected = accountsList[0]?.id ?? null;
+  }
+
+  // Sauvegarde
+  try {
+    await this.db.updateData("configClient", configClient);
+  } catch {}
+
+  return configClient;
+}
+
 
   /* ============================ INSTANCES SELECT =========================== */
 
