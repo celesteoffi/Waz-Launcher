@@ -4,7 +4,10 @@
  */
 import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from '../utils.js'
 import { rpcSet } from "../utils/discordRpc.js";
-import { SkinViewer, IdleAnimation } from "skinview3d";
+
+// ✅ SkinView3D via bundle (script tag)
+// window.skinview3d must exist (assets/js/libs/skinview3d.bundle.js)
+const SkinView3D = () => window.skinview3d;
 
 rpcSet({
   details: "In the launcher",
@@ -22,6 +25,7 @@ class Home {
   async init(config) {
     this.config = config;
     this.db = new database();
+
     this.news()
     this.socialLick()
     this.instancesSelect()
@@ -32,59 +36,38 @@ class Home {
     document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
   }
 
-  /* ===================== AJOUT SKINVIEW3D ===================== */
+  /* ============================================================
+     ✅ SKINVIEW3D (bundle) - inject left panel + canvas + viewer
+     ============================================================ */
 
   async initSkin3D() {
-    const canvas = document.getElementById("skin3d");
-    if (!canvas) return;
-
-    // cleanup si reload panel
-    this.destroySkin3D();
-
-    this.skinViewer = new SkinViewer({
-      canvas,
-      width: 256,
-      height: 256,
-    });
-
-    this.skinViewer.background = null;
-    this.skinViewer.fov = 55;
-    this.skinViewer.zoom = 0.95;
-    this.skinViewer.autoRotate = true;
-    this.skinViewer.autoRotateSpeed = 0.8;
-    this.skinViewer.animation = new IdleAnimation();
-
-    if (this.skinViewer.controls) {
-      this.skinViewer.controls.enableZoom = false;
-      this.skinViewer.controls.enablePan = false;
-      this.skinViewer.controls.enableRotate = true;
-    }
-
-    const info = await this.resolveSkinUrlSafe();
-    const label = document.getElementById("skin3d-name");
-    if (label) label.textContent = info?.name ? info.name : "Skin";
-
-    try {
-      if (info?.skinUrl) await this.skinViewer.loadSkin(info.skinUrl);
-    } catch (e) {
-      console.warn("[SKIN3D] loadSkin failed:", e);
-    }
-
-    // Resize propre (canvas suit le conteneur)
-    const wrapper = canvas.closest(".skin-view");
-    if (wrapper) {
-      const applySize = () => {
-        const r = wrapper.getBoundingClientRect();
-        const w = Math.max(64, Math.floor(r.width));
-        const h = Math.max(64, Math.floor(r.height));
-        this.skinViewer.setSize(w, h);
-      };
-      applySize();
-
-      this._skinResizeObs = new ResizeObserver(() => applySize());
-      this._skinResizeObs.observe(wrapper);
-    }
+  if (!window.skinview3d) {
+    console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
+    return;
   }
+
+  const { SkinViewer, IdleAnimation } = window.skinview3d;
+
+  const canvas = document.getElementById("skin3d");
+  if (!canvas) return;
+
+  this.skinViewer = new SkinViewer({
+    canvas,
+    width: 260,
+    height: 380,
+  });
+
+  this.skinViewer.autoRotate = true;
+  this.skinViewer.autoRotateSpeed = 0.8;
+  this.skinViewer.animation = new IdleAnimation();
+
+  const configClient = await this.ensureConfigClient();
+  const auth = await this.db.readData("accounts", configClient.account_selected);
+
+  const name = auth?.name || "Steve";
+  await this.skinViewer.loadSkin(`https://minotar.net/skin/${encodeURIComponent(name)}`);
+}
+
 
   destroySkin3D() {
     try {
@@ -318,6 +301,9 @@ class Home {
         let instance = await config.getInstanceList()
         let options = instance.find(i => i.name == configClient.instance_selct)
         await setStatus(options?.status)
+
+        // ✅ refresh skin when instance/account changes
+        this.initSkin3D().catch(() => {});
       }
     })
 
@@ -468,17 +454,6 @@ class Home {
       progressBar.value = progress;
       progressBar.max = size;
     });
-
-    launch.on('estimated', (time) => {
-      let hours = Math.floor(time / 3600);
-      let minutes = Math.floor((time - hours * 3600) / 60);
-      let seconds = Math.floor(time - hours * 3600 - minutes * 60);
-      console.log(`${hours}h ${minutes}m ${seconds}s`);
-    })
-
-    launch.on('speed', (speed) => {
-      console.log(`${(speed / 1067008).toFixed(2)} Mb/s`)
-    })
 
     launch.on('patch', patch => {
       console.log(patch);
