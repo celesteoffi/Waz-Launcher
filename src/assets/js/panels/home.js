@@ -22,13 +22,25 @@ class Home {
     this.config = config;
     this.db = new database();
 
-    // News + socials + instance select
-    await this.news();
-    this.socialLick();
-    await this.instancesSelect();
+    // ✅ IMPORTANT : Toujours sécuriser config + compte avant tout
+    const configClient = await this.ensureConfigClient();
 
-    // Skin 3D (bundle chargé via <script src="./js/libs/skinview3d.bundle.js">)
-    this.initSkin3D().catch((e) => console.warn("[SKIN3D] init error:", e));
+    // Si aucun compte -> on renvoie au login au lieu d'afficher "undefined"
+    if (!configClient.account_selected) {
+      console.warn("[LOGIN] Aucun compte sélectionné/présent -> redirection login");
+      changePanel("login");
+      return;
+    }
+
+    // ✅ Lance tout sans bloquer : si news crash, ça ne casse plus login/instances
+    await Promise.allSettled([
+      this.news(),
+      (async () => this.instancesSelect())(),
+      (async () => this.initSkin3D())(),
+    ]);
+
+    // Socials
+    this.socialLick();
 
     // Settings
     const settingsBtn = document.querySelector(".settings-btn");
@@ -46,122 +58,124 @@ class Home {
       .replaceAll("'", "&#039;");
   }
 
-  safeContent(str) {
-    // autorise uniquement le texte + retours ligne -> <br>
+  safeTextWithBreaks(str) {
     return this.escapeHtml(str).replace(/\n/g, "<br>");
   }
 
-  /* ========================== SKINVIEW3D (BUNDLE) ========================= */
+  /* ============================ ACCOUNTS HELPERS =========================== */
 
-  async initSkin3D() {
-    if (!window.skinview3d) {
-      console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
-      return;
-    }
-
-    const { SkinViewer, IdleAnimation } = window.skinview3d;
-
-    const canvas = document.getElementById("skin3d");
-    if (!canvas) return;
-
-    // éviter le viewer en double
-    try {
-      this.skinViewer?.dispose?.();
-    } catch {}
-    this.skinViewer = null;
-
-    const loadingEl =
-      document.getElementById("skin3d-loading") || document.querySelector(".skin-loading");
-
-    // afficher "Chargement..." AU DÉBUT
-    if (loadingEl) {
-      loadingEl.style.display = "block";
-      loadingEl.style.opacity = "1";
-      loadingEl.textContent = "Chargement...";
-    }
-
-    // Crée viewer
-    this.skinViewer = new SkinViewer({
-      canvas,
-      width: 260,
-      height: 380,
-    });
-
-    this.skinViewer.background = null;
-    this.skinViewer.fov = 45;
-    this.skinViewer.zoom = 0.95;
-
-    this.skinViewer.autoRotate = true;
-    this.skinViewer.autoRotateSpeed = 0.8;
-    this.skinViewer.animation = new IdleAnimation();
-
-    // Cadrage fin
-    this.skinViewer.camera.position.x = 0;
-    this.skinViewer.camera.position.y = 16;
-    this.skinViewer.camera.lookAt(0, 16, 0);
-
-    // Charge skin (minotar)
-    const configClient = await this.ensureConfigClient();
-    const auth = await this.db.readData("accounts", configClient.account_selected);
-
-    const name = auth?.name || "Steve";
-    const skinUrl = `https://minotar.net/skin/${encodeURIComponent(name)}`;
+  /**
+   * Essaie de récupérer la liste des comptes sous une forme stable:
+   * - { id, data }[]
+   * Compatible si la DB stocke:
+   * - accounts: { "<id>": {...}, "<id2>": {...} }
+   * - accounts: [ {...}, {...} ]
+   */
+  async getAccountsListSafe() {
+    let accountsRaw = null;
 
     try {
-      await this.skinViewer.loadSkin(skinUrl);
-
-      // ✅ IMPORTANT : cacher "Chargement..." UNIQUEMENT si le skin est chargé
-      if (loadingEl) {
-        loadingEl.style.opacity = "0";
-        setTimeout(() => {
-          loadingEl.style.display = "none";
-        }, 200);
-      }
+      accountsRaw = await this.db.readData("accounts");
     } catch (e) {
-      console.warn("[SKIN3D] loadSkin failed:", e);
-
-      // si erreur, laisse un message (au lieu de rester sur "Chargement...")
-      if (loadingEl) {
-        loadingEl.style.opacity = "1";
-        loadingEl.style.display = "block";
-        loadingEl.textContent = "Impossible de charger le skin";
-      }
+      console.warn("[LOGIN] readData('accounts') failed:", e);
+      return [];
     }
+
+    // array
+    if (Array.isArray(accountsRaw)) {
+      return accountsRaw
+        .filter(Boolean)
+        .map((a) => {
+          const id = a?.uuid || a?.id || a?.profile?.id || a?.profile?.uuid || a?.name || null;
+          return id ? { id: String(id), data: a } : null;
+        })
+        .filter(Boolean);
+    }
+
+    // object map
+    if (accountsRaw && typeof accountsRaw === "object") {
+      return Object.entries(accountsRaw)
+        .map(([id, data]) => (id && data ? { id: String(id), data } : null))
+        .filter(Boolean);
+    }
+
+    return [];
   }
 
-  destroySkin3D() {
+  /**
+   * Lit un compte par id de manière robuste.
+   * Certains "database" acceptent readData("accounts", id) uniquement,
+   * d'autres stockent un objet global.
+   */
+  async readAccountByIdSafe(id) {
+    if (!id) return null;
+
+    // 1) voie rapide: readData("accounts", id)
     try {
-      if (this._skinResizeObs) {
-        this._skinResizeObs.disconnect();
-        this._skinResizeObs = null;
-      }
-      if (this.skinViewer) {
-        this.skinViewer.dispose();
-        this.skinViewer = null;
-      }
+      const direct = await this.db.readData("accounts", id);
+      if (direct) return direct;
     } catch {}
+
+    // 2) fallback: lire map complète
+    const list = await this.getAccountsListSafe();
+    const found = list.find((a) => String(a.id) === String(id));
+    return found?.data ?? null;
   }
 
-  async resolveSkinUrlSafe() {
-    const fallbackLocal = "assets/images/default-skin.png";
+  /* ============================= CONFIG CLIENT ============================ */
 
-    const configClient = await this.ensureConfigClient();
-    const auth = await this.db.readData("accounts", configClient.account_selected);
+  async ensureConfigClient() {
+    let configClient = await this.db.readData("configClient");
+    configClient = configClient ?? {};
 
-    const name = auth?.name || auth?.username || auth?.profile?.name || "Joueur";
+    // Defaults launcher
+    configClient.launcher_config = configClient.launcher_config ?? {
+      closeLauncher: "close-all", // close-all | close-launcher
+      download_multi: 10,
+      intelEnabledMac: false,
+    };
 
-    let uuid = auth?.uuid || auth?.profile?.id || auth?.profile?.uuid || null;
-    if (uuid) uuid = String(uuid).replace(/-/g, "");
+    // Defaults java
+    configClient.java_config = configClient.java_config ?? {
+      java_path: null,
+      java_memory: { min: 2, max: 4 },
+    };
+    configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 };
+    configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2;
+    configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4;
 
-    if (uuid && uuid.length >= 32) {
-      return { name, skinUrl: `https://crafatar.com/skins/${uuid}` };
+    // Defaults game
+    configClient.game_config = configClient.game_config ?? {
+      screen_size: { width: 1280, height: 720 },
+    };
+    configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 };
+    configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280;
+    configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720;
+
+    // instance select
+    if (configClient.instance_selct === undefined) configClient.instance_selct = null;
+
+    // ✅ FIX LOGIN: account_selected
+    const accountsList = await this.getAccountsListSafe();
+    const selectedId = configClient.account_selected ? String(configClient.account_selected) : null;
+    const selectedExists = selectedId ? accountsList.some((a) => String(a.id) === selectedId) : false;
+
+    // Si aucun compte, on met null (et init() redirigera vers login)
+    if (accountsList.length === 0) {
+      configClient.account_selected = null;
+    } else if (!selectedId || !selectedExists) {
+      // Sinon on prend le premier compte existant
+      configClient.account_selected = accountsList[0].id;
     }
 
-    if (name) {
-      return { name, skinUrl: `https://minotar.net/skin/${encodeURIComponent(name)}` };
+    // Sauvegarde sans casser
+    try {
+      await this.db.updateData("configClient", configClient);
+    } catch (e) {
+      console.warn("[CONFIG] updateData('configClient') failed:", e);
     }
 
-    return { name, skinUrl: fallbackLocal };
+    return configClient;
   }
 
   /* =============================== NEWS (SAFE) ============================ */
@@ -206,7 +220,7 @@ class Home {
       return;
     }
 
-    // Erreur serveur news
+    // Erreur / format invalide
     if (!news || !Array.isArray(news)) {
       const blockNews = document.createElement("div");
       blockNews.classList.add("news-block");
@@ -231,13 +245,14 @@ class Home {
       return;
     }
 
-    // Render (SAFE)
+    // Render safe
     for (const News of news) {
-      const date = this.getdate(News.publish_date);
+      const publish = News?.publish_date ?? Date.now();
+      const date = this.getdate(publish);
 
-      const title = this.escapeHtml(News.title ?? "Sans titre");
-      const author = this.escapeHtml(News.author ?? "Inconnu");
-      const content = this.safeContent(News.content ?? "");
+      const title = this.escapeHtml(News?.title ?? "Sans titre");
+      const author = this.escapeHtml(News?.author ?? "Inconnu");
+      const content = this.safeTextWithBreaks(News?.content ?? "");
 
       const blockNews = document.createElement("div");
       blockNews.classList.add("news-block");
@@ -267,7 +282,6 @@ class Home {
 
   socialLick() {
     const socials = document.querySelectorAll(".social-block");
-
     socials.forEach((block) => {
       block.addEventListener("click", (e) => {
         const el = e.currentTarget || e.target.closest(".social-block");
@@ -282,83 +296,113 @@ class Home {
     });
   }
 
-  /* ============================= CONFIG CLIENT ============================ */
+  /* ========================== SKINVIEW3D (BUNDLE) ========================= */
 
-  async ensureConfigClient() {
-  let configClient = await this.db.readData("configClient");
-  configClient = configClient ?? {};
+  async initSkin3D() {
+    if (!window.skinview3d) {
+      console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
+      return;
+    }
 
-  // ----------------- defaults -----------------
-  configClient.launcher_config = configClient.launcher_config ?? {
-    closeLauncher: "close-all", // close-all | close-launcher
-    download_multi: 10,
-    intelEnabledMac: false,
-  };
+    const { SkinViewer, IdleAnimation } = window.skinview3d;
 
-  configClient.java_config = configClient.java_config ?? {
-    java_path: null,
-    java_memory: { min: 2, max: 4 },
-  };
-  configClient.java_config.java_memory = configClient.java_config.java_memory ?? { min: 2, max: 4 };
-  configClient.java_config.java_memory.min = configClient.java_config.java_memory.min ?? 2;
-  configClient.java_config.java_memory.max = configClient.java_config.java_memory.max ?? 4;
+    const canvas = document.getElementById("skin3d");
+    if (!canvas) return;
 
-  configClient.game_config = configClient.game_config ?? {
-    screen_size: { width: 1280, height: 720 },
-  };
-  configClient.game_config.screen_size = configClient.game_config.screen_size ?? { width: 1280, height: 720 };
-  configClient.game_config.screen_size.width = configClient.game_config.screen_size.width ?? 1280;
-  configClient.game_config.screen_size.height = configClient.game_config.screen_size.height ?? 720;
+    // éviter le viewer en double
+    try {
+      this.skinViewer?.dispose?.();
+    } catch {}
+    this.skinViewer = null;
 
-  if (configClient.instance_selct === undefined) configClient.instance_selct = null;
+    const loadingEl =
+      document.getElementById("skin3d-loading") || document.querySelector(".skin-loading");
 
-  // ----------------- ✅ FIX LOGIN: account_selected -----------------
-  // On tente de récupérer tous les comptes
-  let accountsRaw = null;
-  try {
-    accountsRaw = await this.db.readData("accounts"); // selon ta DB, ça peut renvoyer object ou array
-  } catch {}
+    if (loadingEl) {
+      loadingEl.style.display = "block";
+      loadingEl.style.opacity = "1";
+      loadingEl.textContent = "Chargement...";
+    }
 
-  // Normalise en tableau [{id, ...data}]
-  let accountsList = [];
-  if (Array.isArray(accountsRaw)) {
-    accountsList = accountsRaw
-      .filter(Boolean)
-      .map((a) => ({
-        id: a?.uuid || a?.id || a?.profile?.id || a?.profile?.uuid || a?.name,
-        data: a,
-      }))
-      .filter((x) => x.id);
-  } else if (accountsRaw && typeof accountsRaw === "object") {
-    accountsList = Object.entries(accountsRaw)
-      .map(([id, data]) => ({ id, data }))
-      .filter((x) => x.id && x.data);
+    this.skinViewer = new SkinViewer({
+      canvas,
+      width: 260,
+      height: 380,
+    });
+
+    this.skinViewer.background = null;
+
+    // Cadrage / centrage (ajuste si tu veux)
+    this.skinViewer.fov = 45;
+    this.skinViewer.zoom = 0.95;
+
+    this.skinViewer.autoRotate = true;
+    this.skinViewer.autoRotateSpeed = 0.8;
+    this.skinViewer.animation = new IdleAnimation();
+
+    // recadrage fin (monte/descend)
+    this.skinViewer.camera.position.x = 0;
+    this.skinViewer.camera.position.y = 16;
+    this.skinViewer.camera.lookAt(0, 16, 0);
+
+    // Charge skin
+    const configClient = await this.ensureConfigClient();
+    if (!configClient.account_selected) {
+      if (loadingEl) loadingEl.textContent = "Aucun compte";
+      return;
+    }
+
+    const auth = await this.readAccountByIdSafe(configClient.account_selected);
+    const name = auth?.name || auth?.username || auth?.profile?.name || "Steve";
+    const skinUrl = `https://minotar.net/skin/${encodeURIComponent(name)}`;
+
+    try {
+      await this.skinViewer.loadSkin(skinUrl);
+
+      if (loadingEl) {
+        loadingEl.style.opacity = "0";
+        setTimeout(() => (loadingEl.style.display = "none"), 200);
+      }
+    } catch (e) {
+      console.warn("[SKIN3D] loadSkin failed:", e);
+      if (loadingEl) {
+        loadingEl.style.opacity = "1";
+        loadingEl.style.display = "block";
+        loadingEl.textContent = "Impossible de charger le skin";
+      }
+    }
   }
 
-  // Vérifie si l'account_selected existe vraiment
-  const selectedId = configClient.account_selected;
-  const selectedExists = !!accountsList.find((a) => String(a.id) === String(selectedId));
-
-  // Si pas sélectionné ou sélection invalide -> choisir le premier compte
-  if (!selectedId || !selectedExists) {
-    configClient.account_selected = accountsList[0]?.id ?? null;
+  destroySkin3D() {
+    try {
+      if (this._skinResizeObs) {
+        this._skinResizeObs.disconnect();
+        this._skinResizeObs = null;
+      }
+      if (this.skinViewer) {
+        this.skinViewer.dispose();
+        this.skinViewer = null;
+      }
+    } catch {}
   }
-
-  // Sauvegarde
-  try {
-    await this.db.updateData("configClient", configClient);
-  } catch {}
-
-  return configClient;
-}
-
 
   /* ============================ INSTANCES SELECT =========================== */
 
   async instancesSelect() {
     let configClient = await this.ensureConfigClient();
-    let auth = await this.db.readData("accounts", configClient.account_selected);
-    let instancesList = await config.getInstanceList();
+
+    // ✅ Si pas de compte, on stop (init() gère la redirection)
+    if (!configClient.account_selected) return;
+
+    let auth = await this.readAccountByIdSafe(configClient.account_selected);
+
+    let instancesList = [];
+    try {
+      instancesList = await config.getInstanceList();
+    } catch (e) {
+      console.error("[INSTANCE] getInstanceList failed:", e);
+      return;
+    }
 
     let instanceSelect = instancesList.find((i) => i.name == configClient?.instance_selct)
       ? configClient?.instance_selct
@@ -380,6 +424,7 @@ class Home {
       instanceBTN.style.paddingRight = "0";
     }
 
+    // Choix auto instance si vide
     if (!instanceSelect) {
       let newInstanceSelect = instancesList.find((i) => i.whitelistActive == false) ?? instancesList[0];
       configClient.instance_selct = newInstanceSelect?.name ?? null;
@@ -387,42 +432,39 @@ class Home {
       await this.db.updateData("configClient", configClient);
     }
 
+    // Status + whitelist
     for (let instance of instancesList) {
       if (instance.whitelistActive) {
-        let whitelist = instance.whitelist?.find((w) => w == auth?.name);
-        if (whitelist !== auth?.name) {
-          if (instance.name == instanceSelect) {
-            let newInstanceSelect = instancesList.find((i) => i.whitelistActive == false) ?? instancesList[0];
-            configClient.instance_selct = newInstanceSelect?.name ?? null;
-            instanceSelect = configClient.instance_selct;
-            setStatus(newInstanceSelect?.status ?? instance.status);
-            await this.db.updateData("configClient", configClient);
-          }
+        const wlOk = Array.isArray(instance.whitelist) && instance.whitelist.includes(auth?.name);
+        if (!wlOk && instance.name === instanceSelect) {
+          let newInstanceSelect = instancesList.find((i) => i.whitelistActive == false) ?? instancesList[0];
+          configClient.instance_selct = newInstanceSelect?.name ?? null;
+          instanceSelect = configClient.instance_selct;
+          setStatus(newInstanceSelect?.status ?? instance.status);
+          await this.db.updateData("configClient", configClient);
         }
-      } else {
-        console.log(`Initializing instance ${instance.name}...`);
       }
       if (instance.name == instanceSelect) setStatus(instance.status);
     }
 
+    // Click selection
     instancePopup.addEventListener("click", async (e) => {
       let configClient = await this.ensureConfigClient();
 
       if (e.target.classList.contains("instance-elements")) {
         let newInstanceSelect = e.target.id;
-        let activeInstanceSelect = document.querySelector(".active-instance");
 
-        if (activeInstanceSelect) activeInstanceSelect.classList.toggle("active-instance");
+        let activeInstanceSelect = document.querySelector(".active-instance");
+        if (activeInstanceSelect) activeInstanceSelect.classList.remove("active-instance");
         e.target.classList.add("active-instance");
 
         configClient.instance_selct = newInstanceSelect;
         await this.db.updateData("configClient", configClient);
 
-        instanceSelect = newInstanceSelect;
-
         instancePopup.style.display = "none";
-        let instance = await config.getInstanceList();
-        let options = instance.find((i) => i.name == configClient.instance_selct);
+
+        const list = await config.getInstanceList();
+        const options = list.find((i) => i.name == configClient.instance_selct);
         await setStatus(options?.status);
 
         // refresh skin
@@ -432,18 +474,20 @@ class Home {
 
     instanceBTN.addEventListener("click", async (e) => {
       let configClient = await this.ensureConfigClient();
+      if (!configClient.account_selected) return;
+
       let instanceSelect = configClient.instance_selct;
-      let auth = await this.db.readData("accounts", configClient.account_selected);
+      let auth = await this.readAccountByIdSafe(configClient.account_selected);
 
       if (e.target.classList.contains("instance-select")) {
         instancesListPopup.innerHTML = "";
 
         for (let instance of instancesList) {
-          const isAllowed =
+          const allowed =
             !instance.whitelistActive ||
             (Array.isArray(instance.whitelist) && instance.whitelist.includes(auth?.name));
 
-          if (!isAllowed) continue;
+          if (!allowed) continue;
 
           const active = instance.name == instanceSelect ? " active-instance" : "";
           instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements${active}">${instance.name}</div>`;
@@ -464,8 +508,21 @@ class Home {
   async startGame() {
     let launch = new Launch();
     let configClient = await this.ensureConfigClient();
+
+    if (!configClient.account_selected) {
+      const p = new popup();
+      p.openPopup({
+        title: "Erreur",
+        content: "Aucun compte n'est connecté. Merci de vous connecter.",
+        color: "red",
+        options: true,
+      });
+      changePanel("login");
+      return;
+    }
+
     let instances = await config.getInstanceList();
-    let authenticator = await this.db.readData("accounts", configClient.account_selected);
+    let authenticator = await this.readAccountByIdSafe(configClient.account_selected);
     let options = instances.find((i) => i.name == configClient.instance_selct);
 
     let playInstanceBTN = document.querySelector(".play-instance");
@@ -481,12 +538,10 @@ class Home {
         color: "red",
         options: true,
       });
-      console.error("[LAUNCH] Instance introuvable, configClient=", configClient, "instances=", instances);
       return;
     }
 
     const loaderCfg = options.loader ?? options.loadder;
-
     if (!loaderCfg) {
       const p = new popup();
       p.openPopup({
@@ -495,7 +550,6 @@ class Home {
         color: "red",
         options: true,
       });
-      console.error("[LAUNCH] options=", options);
       return;
     }
 
@@ -508,14 +562,13 @@ class Home {
         color: "red",
         options: true,
       });
-      console.error("[LAUNCH] loaderCfg=", loaderCfg);
       return;
     }
 
     const loaderType = loaderCfg.loadder_type ?? loaderCfg.loader_type ?? loaderCfg.type ?? "none";
     const loaderBuild = loaderCfg.loadder_version ?? loaderCfg.loader_version ?? loaderCfg.build;
 
-    let opt = {
+    const opt = {
       url: options.url,
       authenticator,
       timeout: 10000,
@@ -590,7 +643,7 @@ class Home {
       }
       new logger("Minecraft", "#36b030");
       ipcRenderer.send("main-window-progress-load");
-      if (infoStarting) infoStarting.innerHTML = `Demarrage en cours...`;
+      if (infoStarting) infoStarting.innerHTML = `Démarrage en cours...`;
       console.log(e);
     });
 
@@ -603,7 +656,6 @@ class Home {
       if (playInstanceBTN) playInstanceBTN.style.display = "flex";
       if (infoStarting) infoStarting.innerHTML = `Vérification`;
       new logger(pkg.name, "#7289da");
-      console.log("Close");
     });
 
     launch.on("error", (err) => {
@@ -630,11 +682,12 @@ class Home {
   /* =============================== DATE UTILS ============================= */
 
   getdate(e) {
-    let date = new Date(e);
-    let year = date.getFullYear();
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-    let allMonth = [
+    const date = new Date(e);
+    const year = date.getFullYear();
+    const monthIndex = date.getMonth(); // 0..11
+    const day = date.getDate();
+
+    const allMonth = [
       "janvier",
       "février",
       "mars",
@@ -648,7 +701,8 @@ class Home {
       "novembre",
       "décembre",
     ];
-    return { year: year, month: allMonth[month - 1], day: day };
+
+    return { year, month: allMonth[monthIndex], day };
   }
 }
 
