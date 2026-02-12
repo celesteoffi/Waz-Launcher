@@ -1,24 +1,267 @@
+/* ========================================================================== */
+/* THEME - UniverCraft (glass cyan/green)                                     */
+/* ========================================================================== */
+
 .global {
-    --element-color: #00bd7a;
-    --transition: all 0.5s cubic-bezier(1, 0.46, 0, 1.29);
-    --dark-color: #292929;
-    --light-color: rgb(245, 245, 245);
+  /* Accent principal (boutons / bordures actives) */
+  --element-color: #00d084;
+
+  /* Accent secondaire (lignes / glow cyan) */
+  --element-color-2: #00c2ff;
+
+  --transition: all 0.35s cubic-bezier(.2, .8, .2, 1);
+
+  /* Ces 2 là servent surtout en fallback */
+  --dark-color: #0f141a;
+  --light-color: #f5f7fb;
 }
 
+/* ===========================
+   DARK THEME (recommandé)
+   =========================== */
 .dark {
-    --color: #F5F5F5;
-    --background: #292929;
-    --background-element: #424242;
-    --background-transparent: #2c2c2ccc;
-    --shadow: rgba(25, 25, 25, 0.7);
-    --svg-color: brightness(0) saturate(100%) invert(100%) sepia(55%) saturate(23%) hue-rotate(236deg) brightness(108%) contrast(92%);
+  /* Texte */
+  --color: rgba(245, 245, 245, 0.95);
+
+  /* Fond global (derrière le glass) */
+  --background: #0b0f14;
+
+  /* Surfaces glass */
+  --background-element: rgba(255, 255, 255, 0.07);
+  --background-transparent: rgba(10, 14, 18, 0.55);
+
+  /* Ombres / profondeur */
+  --shadow: rgba(0, 0, 0, 0.55);
+
+  /* Icônes SVG (blanc) */
+  --svg-color: brightness(0) saturate(100%) invert(100%) sepia(0%)
+    saturate(0%) hue-rotate(0deg) brightness(110%) contrast(100%);
 }
 
+/* ===========================
+   LIGHT THEME (glass clair)
+   =========================== */
 .light {
-    --color: #151515;
-    --background: rgb(245, 245, 245);
-    --background-element: #c2c2c2;
-    --background-transparent: rgba(204, 204, 204, 0.8);
-    --shadow: rgba(208, 208, 208, 0.7);
-    --svg-color: brightness(0) saturate(100%) invert(0%) sepia(5%) saturate(1719%) hue-rotate(357deg) brightness(94%) contrast(84%);
+  /* Texte */
+  --color: rgba(20, 24, 30, 0.92);
+
+  /* Fond global */
+  --background: #eef3f8;
+
+  /* Surfaces glass claires */
+  --background-element: rgba(255, 255, 255, 0.72);
+  --background-transparent: rgba(255, 255, 255, 0.55);
+
+  /* Ombres (douces) */
+  --shadow: rgba(30, 40, 55, 0.18);
+
+  /* Icônes SVG (noir/gris) */
+  --svg-color: brightness(0) saturate(100%) invert(0%) sepia(0%)
+    saturate(0%) hue-rotate(0deg) brightness(92%) contrast(105%);
+}
+
+/* ========================================================================== */
+/* Optionnel : si tu veux que certains composants utilisent aussi le cyan      */
+/* Exemple: border-image / underline / glow                                   */
+/* ========================================================================== */
+/*
+:root {
+  --accent: var(--element-color);
+  --accent2: var(--element-color-2);
+}
+*/
+
+/* ========================================================================== */
+/* FIX MODE CLAIR (lisibilité)                                                */
+/* ========================================================================== */
+
+/* 1) Overlay global plus clair en mode light */
+.light body::before{
+  background:
+    radial-gradient(900px 520px at 50% 18%, rgba(0, 194, 255, 0.10), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0, 208, 132, 0.10), transparent 62%),
+    radial-gradient(1000px 700px at 65% 75%, rgba(0,0,0,0.12), transparent 55%),
+    linear-gradient(to bottom, rgba(255,255,255,0.55), rgba(255,255,255,0.30));
+}
+
+/* 2) Couleurs / strokes plus cohérents en light */
+.light{
+  --color: rgba(20, 24, 30, 0.92);
+  --text: rgba(20, 24, 30, 0.92);
+  --text-dim: rgba(20, 24, 30, 0.72);
+
+  --stroke: rgba(20, 24, 30, 0.12);
+  --stroke-strong: rgba(20, 24, 30, 0.18);
+
+  --shadow1: 0 18px 50px rgba(20, 24, 30, 0.12);
+  --shadow2: 0 10px 25px rgba(20, 24, 30, 0.10);
+
+  --glass: rgba(255, 255, 255, 0.70);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+}
+
+/* 3) Panels glass (news / settings / cards) */
+.light .new-tab,
+.light .status-server,
+.light .social-block,
+.light .settings-btn,
+.light .play-instance,
+.light .instances-tab{
+  border: 1px solid var(--stroke);
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.62));
+  box-shadow: var(--shadow2);
+}
+
+/* 4) Cartes internes (ex: news-block) -> stop le fond noir */
+.light .news-block,
+.light .instance-elements{
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(20,24,30,0.10);
+}
+
+.light .news-block:hover,
+.light .instance-elements:hover{
+  background: rgba(255,255,255,0.72);
+  border-color: rgba(0, 208, 132, 0.28);
+  box-shadow: var(--shadow2);
+}
+
+/* 5) Texte : force sombre si certains éléments étaient restés blancs */
+.light,
+.light .titre-tab-new,
+.light .server-status-name,
+.light .header-text .title,
+.light .news-block p,
+.light .news-block .content,
+.light .news-header .date,
+.light .player-count{
+  color: rgba(20, 24, 30, 0.92);
+}
+
+/* 6) Chips date -> lisible en clair */
+.light .news-header .date{
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(20,24,30,0.12);
+}
+
+/* 7) Boutons de menu settings (COMPTES/JAVA/...) */
+.light .btn-settings,
+.light .settings-menu button,
+.light .settings .menu button{
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(20,24,30,0.14);
+  color: rgba(20,24,30,0.92);
+}
+
+.light .btn-settings:hover,
+.light .settings-menu button:hover,
+.light .settings .menu button:hover{
+  border-color: rgba(0, 194, 255, 0.35);
+  box-shadow: 0 10px 25px rgba(0, 194, 255, 0.12);
+}
+
+/* 8) Bouton actif (comme ton cyan) */
+.light .active,
+.light .selected,
+.light .settings-menu .active,
+.light .settings .menu .active{
+  background: rgba(0, 194, 255, 0.16);
+  border-color: rgba(0, 194, 255, 0.50);
+  color: rgba(12, 18, 24, 0.96);
+}
+
+/* 9) SVG icons : repasse en sombre */
+.light .icon-social{
+  filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%)
+    hue-rotate(0deg) brightness(90%) contrast(110%);
+}
+
+/* ===========================
+   THEME - UniverCraft Launcher
+   (clair / sombre cohérent)
+   =========================== */
+
+.global {
+  /* Accent */
+  --accent: #00d084;
+  --accent2: #00c2ff;
+
+  /* Transitions */
+  --transition: all 0.35s cubic-bezier(.2, .8, .2, 1);
+
+  /* Couleurs “abstraites” utilisées partout */
+  --text: rgba(245, 245, 245, 0.95);
+  --text-dim: rgba(245, 245, 245, 0.72);
+
+  --bg: #0b0f14;
+  --bg-overlay: rgba(8, 10, 14, 0.55);
+
+  --panel-bg: rgba(255, 255, 255, 0.07);
+  --panel-bg-strong: rgba(255, 255, 255, 0.11);
+  --panel-hover: rgba(0, 194, 255, 0.12);
+
+  --stroke: rgba(255, 255, 255, 0.14);
+  --stroke-strong: rgba(255, 255, 255, 0.22);
+
+  --shadow: rgba(0, 0, 0, 0.45);
+
+  /* Boutons */
+  --btn-bg: rgba(0, 0, 0, 0.20);
+  --btn-hover: rgba(0, 194, 255, 0.14);
+
+  /* SVG */
+  --svg-color: brightness(0) invert(1);
+
+  /* Radius */
+  --radius: 18px;
+  --radius-sm: 14px;
+}
+
+/* ====== DARK ====== */
+.dark {
+  --text: rgba(245, 245, 245, 0.95);
+  --text-dim: rgba(245, 245, 245, 0.72);
+
+  --bg: #0b0f14;
+  --bg-overlay: rgba(8, 10, 14, 0.62);
+
+  --panel-bg: rgba(255, 255, 255, 0.07);
+  --panel-bg-strong: rgba(255, 255, 255, 0.11);
+  --panel-hover: rgba(0, 194, 255, 0.14);
+
+  --stroke: rgba(255, 255, 255, 0.14);
+  --stroke-strong: rgba(255, 255, 255, 0.22);
+
+  --shadow: rgba(0, 0, 0, 0.45);
+
+  --btn-bg: rgba(0, 0, 0, 0.20);
+  --btn-hover: rgba(0, 194, 255, 0.14);
+
+  --svg-color: brightness(0) invert(1);
+}
+
+/* ====== LIGHT (corrigé : lisible + panels clairs) ====== */
+.light {
+  --text: rgba(18, 20, 24, 0.92);
+  --text-dim: rgba(18, 20, 24, 0.65);
+
+  /* Fond clair + overlay clair */
+  --bg: #f5f6f8;
+  --bg-overlay: rgba(255, 255, 255, 0.70);
+
+  /* Panels glass “blanc” */
+  --panel-bg: rgba(255, 255, 255, 0.78);
+  --panel-bg-strong: rgba(255, 255, 255, 0.88);
+  --panel-hover: rgba(0, 194, 255, 0.12);
+
+  /* Traits + shadow adaptés clair */
+  --stroke: rgba(0, 0, 0, 0.10);
+  --stroke-strong: rgba(0, 0, 0, 0.16);
+  --shadow: rgba(0, 0, 0, 0.18);
+
+  --btn-bg: rgba(255, 255, 255, 0.70);
+  --btn-hover: rgba(0, 194, 255, 0.14);
+
+  --svg-color: brightness(0) saturate(100%) invert(0%) sepia(5%) saturate(1719%)
+    hue-rotate(357deg) brightness(94%) contrast(84%);
 }

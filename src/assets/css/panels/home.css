@@ -773,3 +773,100 @@ body::before {
   height: 100%;
   display: block;
 }
+
+/* ===========================
+   PATCH THEME APPLY (IMPORTANT)
+   =========================== */
+
+/* Base */
+body {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* Ton overlay DOIT utiliser la variable */
+body::before {
+  background:
+    radial-gradient(900px 520px at 50% 18%, rgba(0, 194, 255, 0.10), transparent 60%),
+    radial-gradient(820px 520px at 20% 35%, rgba(0, 208, 132, 0.10), transparent 62%),
+    radial-gradient(1000px 700px at 65% 75%, rgba(0,0,0,0.20), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.28)),
+    var(--bg-overlay);
+}
+
+/* Force la lisibilité des textes importants */
+.server-status-name,
+.titre-tab-new,
+.news-header .title,
+.sidebar,
+.instances-tab p {
+  color: var(--text);
+  text-shadow: 0 10px 22px rgba(0,0,0,0.18);
+}
+
+.server-status-text {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* Panels génériques -> variables thème (plus de rgba fixes) */
+.status-server,
+.new-tab,
+.social-block,
+.settings-btn,
+.instances-tab,
+.news-block {
+  border-color: var(--stroke);
+  box-shadow: 0 18px 50px var(--shadow);
+}
+
+/* Background panels */
+.status-server,
+.new-tab,
+.social-block,
+.settings-btn,
+.instances-tab {
+  background: linear-gradient(180deg, var(--panel-bg-strong), var(--panel-bg));
+}
+
+/* Hover panels */
+.status-server:hover,
+.social-block:hover,
+.settings-btn:hover,
+.news-block:hover {
+  border-color: var(--stroke-strong);
+  background: linear-gradient(180deg, var(--panel-bg-strong), var(--panel-hover));
+}
+
+/* SVG / icons */
+.icon-social {
+  filter: var(--svg-color);
+}
+
+/* ===== FIX SPECIFIQUE : le bloc "VOTRE SKIN" =====
+   Mets ici TES classes réelles du panel skin.
+   (si c'est .skin-panel / .skin-tab / .skin-card, garde celles que tu as)
+*/
+.skin-panel,
+.skin-tab,
+.skin-card {
+  background: linear-gradient(180deg, var(--panel-bg-strong), var(--panel-bg)) !important;
+  border: 1px solid var(--stroke) !important;
+  box-shadow: 0 18px 50px var(--shadow);
+  transition: var(--transition);
+}
+
+.skin-panel:hover,
+.skin-tab:hover,
+.skin-card:hover {
+  background: linear-gradient(180deg, var(--panel-bg-strong), var(--panel-hover)) !important;
+  border-color: rgba(0, 194, 255, 0.35) !important;
+  box-shadow: 0 18px 50px var(--shadow), 0 0 18px rgba(0, 194, 255, 0.18);
+}
+
+/* Texte “Chargement…” du skin (si c’est un élément dans le panel) */
+.skin-loading,
+.skin-status,
+.skin-footer {
+  color: var(--text-dim) !important;
+}
