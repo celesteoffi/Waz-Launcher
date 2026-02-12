@@ -48,6 +48,10 @@ body {
   position: relative;
 }
 
+.skin-loading{
+  transition: opacity 250ms ease;
+}
+
 /* Overlay (ne bloque pas les clics) */
 body::before {
   content: "";

@@ -40,7 +40,7 @@ class Home {
      ✅ SKINVIEW3D (bundle) - inject left panel + canvas + viewer
      ============================================================ */
 
-  async initSkin3D() {
+async initSkin3D() {
   if (!window.skinview3d) {
     console.warn("[SKIN3D] skinview3d.bundle.js non chargé");
     return;
@@ -51,12 +51,26 @@ class Home {
   const canvas = document.getElementById("skin3d");
   if (!canvas) return;
 
+  // ✅ éviter le viewer en double
+  try { this.skinViewer?.dispose?.(); } catch {}
+  this.skinViewer = null;
+
+  const loadingEl =
+    document.getElementById("skin3d-loading") ||
+    document.querySelector(".skin-loading");
+
+  if (loadingEl) {
+    loadingEl.style.display = "block";
+    loadingEl.style.opacity = "1";
+  }
+
   this.skinViewer = new SkinViewer({
     canvas,
     width: 260,
     height: 380,
   });
 
+  this.skinViewer.background = null;
   this.skinViewer.autoRotate = true;
   this.skinViewer.autoRotateSpeed = 0.8;
   this.skinViewer.animation = new IdleAnimation();
@@ -65,8 +79,35 @@ class Home {
   const auth = await this.db.readData("accounts", configClient.account_selected);
 
   const name = auth?.name || "Steve";
-  await this.skinViewer.loadSkin(`https://minotar.net/skin/${encodeURIComponent(name)}`);
+  const skinUrl = `https://minotar.net/skin/${encodeURIComponent(name)}`;
+
+  try {
+    await this.skinViewer.loadSkin(skinUrl);
+  } catch (e) {
+    console.warn("[SKIN3D] loadSkin failed:", e);
+  }
+
+  // ✅ Réglages centrage / cadrage
+this.skinViewer.fov = 45;          // angle caméra (plus petit = plus "zoom")
+this.skinViewer.zoom = 0.95;       // zoom global
+this.skinViewer.autoRotate = true;
+this.skinViewer.autoRotateSpeed = 0.8;
+
+// recadrage fin (monte/descend le perso)
+this.skinViewer.camera.position.y = 16;  // + = monte, - = descend
+this.skinViewer.camera.position.x = 0;   // gauche/droite
+this.skinViewer.camera.lookAt(0, 16, 0); // point visé (centre du corps)
+
+  // ✅ cacher "Chargement..." une fois fini (même si erreur)
+  if (loadingEl) {
+    loadingEl.style.opacity = "0";
+    setTimeout(() => {
+      loadingEl.style.display = "none";
+    }, 200);
+  }
 }
+
+
 
 
   destroySkin3D() {
